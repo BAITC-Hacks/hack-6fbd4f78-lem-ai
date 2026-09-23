@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Sana — геймификация бизнес-задач</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span><span>AI Sana</span><small>hackathon MVP</small></div>
+      <div class="topbar-status"><span class="live-dot"></span>локальный режим · данные сохраняются в браузере</div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="role-switcher">
+          <button class="role-btn active" data-role="business">Бизнес</button>
+          <button class="role-btn" data-role="student">Студент</button>
+        </div>
+        <nav class="nav-list">
+          <button class="nav-btn active" data-view="builder"><span>✎</span> Конструктор задачи</button>
+          <button class="nav-btn" data-view="catalog"><span>▦</span> Общий каталог <b id="catalog-count">0</b></button>
+          <button class="nav-btn" data-view="offers"><span>↗</span> Отклики команд <b id="offers-count">0</b></button>
+          <button class="nav-btn" data-view="teams"><span>◎</span> Команды и данные</button>
+          <button class="nav-btn" data-view="demo"><span>▶</span> Демонстрация</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="mini-kpi"><span>Всего баллов</span><strong>100</strong><small>прозрачная формула</small></div>
+          <div class="guardrail"><span>AI guardrail</span><small>Не добавляет факты<br/>и не выбирает команду</small></div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <section class="view active" id="view-builder">
+          <div class="page-heading">
+            <div><p class="eyebrow">01 · БИЗНЕС</p><h1>Превратите идею в задачу</h1><p class="subtitle">Опишите потребность своими словами. AI Sana подсветит пробелы, а вы подтвердите финальную карточку.</p></div>
+            <div class="heading-chip"><span class="chip-dot"></span> Human-in-the-loop</div>
+          </div>
+          <div class="builder-layout">
+            <div class="panel input-panel">
+              <div class="panel-head"><div><span class="step-num">1</span><div><h2>Черновик бизнес-задачи</h2><p>Свободный ввод без шаблонов</p></div></div><span class="required">обязательно</span></div>
+              <label class="field-label" for="draft-text">Что нужно решить?</label>
+              <textarea id="draft-text" rows="8" placeholder="Например: хотим сократить очереди в нашей клинике и сделать запись удобнее..."></textarea>
+              <div class="form-row">
+                <label class="field-group"><span class="field-label">Отрасль</span><select id="draft-industry"><option>Здравоохранение</option><option>Образование</option><option>Ритейл</option><option>Финансы</option><option>Логистика</option><option>Другое</option></select></label>
+                <label class="field-group"><span class="field-label">Контакт</span><input id="draft-contact" placeholder="Имя / email" value="Алия · business@example.com" /></label>
+              </div>
+              <button class="primary-btn full" id="analyze-btn">✦ Проверить полноту и создать карточку</button>
+              <button class="text-btn full" id="load-sample-btn">Загрузить слабое описание для демонстрации</button>
+            </div>
+
+            <div class="panel ai-panel">
+              <div class="panel-head"><div><span class="step-num ai-step">✦</span><div><h2>AI Sana · анализ</h2><p>Локальная объяснимая заглушка AI</p></div></div><span class="ai-badge">AI</span></div>
+              <div id="ai-empty" class="empty-state"><div class="empty-icon">✦</div><p>Здесь появятся уточняющие вопросы,<br/>причины рейтинга и подсказки.</p></div>
+              <div id="ai-result" class="hidden"></div>
+              <details class="prompt-details"><summary>Показать prompt и формат обмена</summary><pre id="prompt-preview">SYSTEM: Анализируй только факты пользователя. Не выдумывай значения.
+INPUT: { draft, industry, answers[] }
+OUTPUT: { missingFields[], questions[], suggestions[] }
+ERROR: при некорректном ответе вернуть fallback с 3 вопросами.</pre></details>
+            </div>
+          </div>
+
+          <div class="panel card-panel" id="card-panel">
+            <div class="panel-head card-head"><div><span class="step-num">2</span><div><h2>Редактируемая карточка задачи</h2><p>Только после вашего подтверждения попадёт в каталог</p></div></div><div class="score-bubble"><strong id="score-value">0</strong><span>/100</span></div></div>
+            <div id="missing-banner" class="missing-banner hidden"></div>
+            <div class="score-track"><span id="score-track-fill"></span></div>
+            <div class="readiness-row"><span id="readiness-label" class="readiness draft">Черновик</span><span id="score-explain">Заполните карточку, чтобы увидеть расчёт.</span></div>
+            <div class="card-grid">
+              <label class="card-field wide"><span>Название задачи <i>*</i></span><input data-field="title" placeholder="Короткое название" /></label>
+              <label class="card-field"><span>Контекст и потребность <i>*</i><em>20</em></span><textarea data-field="contextNeed" rows="4" placeholder="Что происходит сейчас и что нужно изменить?"></textarea></label>
+              <label class="card-field"><span>Пользователи <i>*</i><em>10</em></span><textarea data-field="users" rows="4" placeholder="Для кого создаётся решение?"></textarea></label>
+              <label class="card-field"><span>Данные и материалы <i>*</i><em>20</em></span><textarea data-field="data" rows="4" placeholder="Какие данные, примеры или источники доступны?"></textarea></label>
+              <label class="card-field"><span>Ожидаемый результат <i>*</i><em>15</em></span><textarea data-field="expectedResult" rows="4" placeholder="Какой результат должна показать команда?"></textarea></label>
+              <label class="card-field"><span>Критерии успеха <i>*</i><em>15</em></span><textarea data-field="successCriteria" rows="4" placeholder="По каким измеримым признакам принимается решение?"></textarea></label>
+              <label class="card-field"><span>Ограничения <i>*</i><em>10</em></span><textarea data-field="constraints" rows="4" placeholder="Сроки, технологии, доступы и границы"></textarea></label>
+              <label class="card-field"><span>Формат взаимодействия <i>*</i><em>10</em></span><textarea data-field="format" rows="4" placeholder="Как консультироваться и получать обратную связь?"></textarea></label>
+            </div>
+            <div class="card-actions"><button class="secondary-btn" id="save-draft-btn">Сохранить черновик</button><label class="confirm-check"><input type="checkbox" id="confirm-check" /> Я проверил(а) карточку и подтверждаю публикацию</label><button class="primary-btn" id="publish-btn" disabled>Опубликовать задачу →</button></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-catalog">
+          <div class="page-heading"><div><p class="eyebrow">02 · OPEN CATALOG</p><h1>Каталог задач</h1><p class="subtitle">Все опубликованные задачи доступны командам. Рейтинг влияет на позицию, но не скрывает задачу.</p></div><div class="catalog-total"><strong id="catalog-total">0</strong><span>опубликовано</span></div></div>
+          <div class="toolbar"><div class="search-wrap">⌕ <input id="catalog-search" placeholder="Поиск по задачам, отрасли, пользователям..." /></div><select id="catalog-level"><option value="all">Все уровни готовности</option><option value="draft">Черновик · 0–39</option><option value="working">Рабочая · 40–69</option><option value="ready">Готовая · 70–89</option><option value="priority">Приоритетная · 90–100</option></select><select id="catalog-sort"><option value="rating">Сначала высокий рейтинг</option><option value="new">Сначала новые</option></select></div>
+          <div id="catalog-list" class="catalog-grid"></div>
+        </section>
+
+        <section class="view" id="view-offers">
+          <div class="page-heading"><div><p class="eyebrow">03 · BUSINESS DECISION</p><h1>Отклики команд</h1><p class="subtitle">Сравнивайте предложения и принимайте решение вручную. AI не назначает исполнителей.</p></div></div>
+          <div id="offers-list" class="offers-list"></div>
+        </section>
+
+        <section class="view" id="view-teams">
+          <div class="page-heading"><div><p class="eyebrow">04 · DATA ROOM</p><h1>Команды и тестовые данные</h1><p class="subtitle">В MVP встроен минимальный набор 5×5 для быстрой демонстрации без регистрации.</p></div></div>
+          <div class="data-tabs"><button class="data-tab active" data-data-view="teams-data">5 профилей команд</button><button class="data-tab" data-data-view="drafts-data">5 черновиков</button><button class="data-tab" data-data-view="cards-data">5 карточек</button></div>
+          <div id="teams-data" class="data-view active"></div><div id="drafts-data" class="data-view"></div><div id="cards-data" class="data-view"></div>
+        </section>
+
+        <section class="view" id="view-demo">
+          <div class="page-heading"><div><p class="eyebrow">05 · 5-MINUTE DEMO</p><h1>Сценарий защиты</h1><p class="subtitle">Покажите целостный путь от слабого описания до выбора команды.</p></div><button class="primary-btn" id="demo-reset-btn">Сбросить демо</button></div>
+          <div class="demo-timeline"><div class="demo-step done"><span>1</span><div><strong>Черновик</strong><p>Ввести слабое описание бизнес-задачи.</p></div></div><div class="demo-line"></div><div class="demo-step"><span>2</span><div><strong>AI-вопросы</strong><p>Показать минимум 3 уместных вопроса и заполнить карточку.</p></div></div><div class="demo-line"></div><div class="demo-step"><span>3</span><div><strong>Рост рейтинга</strong><p>Изменить поля и показать прозрачный пересчёт баллов.</p></div></div><div class="demo-line"></div><div class="demo-step"><span>4</span><div><strong>Каталог</strong><p>Опубликовать, открыть задачу студенту и отправить отклик.</p></div></div><div class="demo-line"></div><div class="demo-step"><span>5</span><div><strong>Решение бизнеса</strong><p>Вручную принять или отклонить предложение.</p></div></div></div>
+          <div class="demo-note"><span class="note-icon">ⓘ</span><div><strong>Подсказка для защиты</strong><p>Переключайтесь между ролями «Бизнес» и «Студент» в левом меню. Все изменения сохраняются локально, поэтому сценарий можно повторить.</p></div></div>
+          <div class="architecture-card"><div><p class="eyebrow">ARCHITECTURE</p><h2>Простой, проверяемый MVP</h2><p>UI → localStorage → детерминированный AI fallback → рейтинг → каталог → отклики → ручное решение.</p></div><div class="arch-flow"><span>Draft</span><b>→</b><span>AI</span><b>→</b><span>Card</span><b>→</b><span>Catalog</span><b>→</b><span>Decision</span></div></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="offer-modal"><div class="modal-card"><button class="modal-close" id="modal-close">×</button><p class="eyebrow">TEAM RESPONSE</p><h2 id="offer-modal-title">Отправить предложение</h2><p id="offer-modal-subtitle" class="muted"></p><label class="card-field"><span>Команда</span><select id="offer-team"></select></label><label class="card-field"><span>Идея решения <i>*</i></span><textarea id="offer-idea" rows="4" placeholder="Что вы предлагаете сделать?"></textarea></label><label class="card-field"><span>План и срок <i>*</i></span><textarea id="offer-plan" rows="3" placeholder="Этапы, технологии, ориентировочный срок"></textarea></label><label class="card-field"><span>Ссылка на прототип</span><input id="offer-link" placeholder="https://..." /></label><button class="primary-btn full" id="submit-offer-btn">Отправить отклик</button></div></div>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
