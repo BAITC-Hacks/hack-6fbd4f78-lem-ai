@@ -1,0 +1,65 @@
+# ОС
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Редакторы и IDE
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Cursor (локальные агенты и кэш)
+.cursor/
+.cursorignore
+
+# Секреты и локальная конфигурация
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+secrets.json
+
+# Логи и отладка
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Зависимости (если позже появится npm/yarn)
+node_modules/
+
+# Сборки и кэш
+dist/
+build/
+.cache/
+.parcel-cache/
+.turbo/
+.vite/
+coverage/
+
+# Локальные служебные файлы
+*.local
+.temp/
+tmp/
+temp/
+
+# Тесты Playwright / скриншоты, если появятся
+test-results/
+playwright-report/
+blob-report/
