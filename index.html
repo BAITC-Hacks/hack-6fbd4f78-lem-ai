@@ -22,6 +22,7 @@
         <nav class="nav-list">
           <button class="nav-btn active" data-view="builder"><span>✎</span> Конструктор задачи</button>
           <button class="nav-btn" data-view="catalog"><span>▦</span> Общий каталог <b id="catalog-count">0</b></button>
+          <button class="nav-btn" data-view="dependent"><span>⌁</span> Зависимые задания <b id="dependent-count">0</b></button>
           <button class="nav-btn" data-view="offers"><span>↗</span> Отклики команд <b id="offers-count">0</b></button>
           <button class="nav-btn" data-view="teams"><span>◎</span> Команды и данные</button>
           <button class="nav-btn" data-view="demo"><span>▶</span> Демонстрация</button>
@@ -44,7 +45,10 @@
               <label class="field-label" for="draft-text">Что нужно решить?</label>
               <textarea id="draft-text" rows="8" placeholder="Например: хотим сократить очереди в нашей клинике и сделать запись удобнее..."></textarea>
               <div class="form-row">
+                <label class="field-group"><span class="field-label">Название компании</span><input id="draft-company" placeholder="Например: MedLine Clinic" /></label>
                 <label class="field-group"><span class="field-label">Отрасль</span><select id="draft-industry"><option>Здравоохранение</option><option>Образование</option><option>Ритейл</option><option>Финансы</option><option>Логистика</option><option>Другое</option></select></label>
+              </div>
+              <div class="form-row">
                 <label class="field-group"><span class="field-label">Контакт</span><input id="draft-contact" placeholder="Имя / email" value="Алия · business@example.com" /></label>
               </div>
               <button class="primary-btn full" id="analyze-btn">✦ Проверить полноту и создать карточку</button>
@@ -56,7 +60,7 @@
               <div id="ai-empty" class="empty-state"><div class="empty-icon">✦</div><p>Здесь появятся уточняющие вопросы,<br/>причины рейтинга и подсказки.</p></div>
               <div id="ai-result" class="hidden"></div>
               <details class="prompt-details"><summary>Показать prompt и формат обмена</summary><pre id="prompt-preview">SYSTEM: Анализируй только факты пользователя. Не выдумывай значения.
-INPUT: { draft, industry, answers[] }
+INPUT: { companyName, draft, industry, contact, answers[] }
 OUTPUT: { missingFields[], questions[], suggestions[] }
 ERROR: при некорректном ответе вернуть fallback с 3 вопросами.</pre></details>
             </div>
@@ -68,6 +72,7 @@ ERROR: при некорректном ответе вернуть fallback с 3
             <div class="score-track"><span id="score-track-fill"></span></div>
             <div class="readiness-row"><span id="readiness-label" class="readiness draft">Черновик</span><span id="score-explain">Заполните карточку, чтобы увидеть расчёт.</span></div>
             <div class="card-grid">
+              <label class="card-field wide"><span>Компания заказчика</span><input data-field="companyName" placeholder="Название компании" /></label>
               <label class="card-field wide"><span>Название задачи <i>*</i></span><input data-field="title" placeholder="Короткое название" /></label>
               <label class="card-field"><span>Контекст и потребность <i>*</i><em>20</em></span><textarea data-field="contextNeed" rows="4" placeholder="Что происходит сейчас и что нужно изменить?"></textarea></label>
               <label class="card-field"><span>Пользователи <i>*</i><em>10</em></span><textarea data-field="users" rows="4" placeholder="Для кого создаётся решение?"></textarea></label>
@@ -82,13 +87,19 @@ ERROR: при некорректном ответе вернуть fallback с 3
         </section>
 
         <section class="view" id="view-catalog">
-          <div class="page-heading"><div><p class="eyebrow">02 · OPEN CATALOG</p><h1>Каталог задач</h1><p class="subtitle">Все опубликованные задачи доступны командам. Рейтинг влияет на позицию, но не скрывает задачу.</p></div><div class="catalog-total"><strong id="catalog-total">0</strong><span>опубликовано</span></div></div>
+          <div class="page-heading"><div><p class="eyebrow">02 · OPEN CATALOG</p><h1>Каталог задач</h1><p class="subtitle">Все опубликованные задачи доступны командам. Из любой задачи можно попросить AI-агента подготовить зависимую карточку.</p></div><div class="catalog-total"><strong id="catalog-total">0</strong><span>опубликовано</span></div></div>
           <div class="toolbar"><div class="search-wrap">⌕ <input id="catalog-search" placeholder="Поиск по задачам, отрасли, пользователям..." /></div><select id="catalog-level"><option value="all">Все уровни готовности</option><option value="draft">Черновик · 0–39</option><option value="working">Рабочая · 40–69</option><option value="ready">Готовая · 70–89</option><option value="priority">Приоритетная · 90–100</option></select><select id="catalog-sort"><option value="rating">Сначала высокий рейтинг</option><option value="new">Сначала новые</option></select></div>
           <div id="catalog-list" class="catalog-grid"></div>
         </section>
 
+        <section class="view" id="view-dependent">
+          <div class="page-heading"><div><p class="eyebrow">03 · AI TASK AGENT</p><h1>Зависимые задания</h1><p class="subtitle">Карточки-подзадачи, созданные из задач заказчика. AI готовит первый вариант, а финальное содержание и связь с родителем проверяет человек.</p></div><div class="catalog-total"><strong id="dependent-total">0</strong><span>карточек</span></div></div>
+          <div class="agent-banner"><div class="agent-banner-icon">✦</div><div><strong>AI-агент декомпозиции</strong><p>Берёт только контекст, данные, результат и ограничения родительской задачи. Не выдумывает факты, не назначает исполнителя и не публикует карточку автоматически.</p></div><span class="ai-badge">LOCAL AI</span></div>
+          <div id="dependent-list" class="dependent-grid"></div>
+        </section>
+
         <section class="view" id="view-offers">
-          <div class="page-heading"><div><p class="eyebrow">03 · BUSINESS DECISION</p><h1>Отклики команд</h1><p class="subtitle">Сравнивайте предложения и принимайте решение вручную. AI не назначает исполнителей.</p></div></div>
+          <div class="page-heading"><div><p class="eyebrow">04 · BUSINESS DECISION</p><h1>Отклики команд</h1><p class="subtitle">Сравнивайте предложения и принимайте решение вручную. AI не назначает исполнителей.</p></div></div>
           <div id="offers-list" class="offers-list"></div>
         </section>
 
@@ -108,7 +119,29 @@ ERROR: при некорректном ответе вернуть fallback с 3
     </div>
   </div>
 
-  <div class="modal hidden" id="offer-modal"><div class="modal-card"><button class="modal-close" id="modal-close">×</button><p class="eyebrow">TEAM RESPONSE</p><h2 id="offer-modal-title">Отправить предложение</h2><p id="offer-modal-subtitle" class="muted"></p><label class="card-field"><span>Команда</span><select id="offer-team"></select></label><label class="card-field"><span>Идея решения <i>*</i></span><textarea id="offer-idea" rows="4" placeholder="Что вы предлагаете сделать?"></textarea></label><label class="card-field"><span>План и срок <i>*</i></span><textarea id="offer-plan" rows="3" placeholder="Этапы, технологии, ориентировочный срок"></textarea></label><label class="card-field"><span>Ссылка на прототип</span><input id="offer-link" placeholder="https://..." /></label><button class="primary-btn full" id="submit-offer-btn">Отправить отклик</button></div></div>
+  <div class="modal hidden" id="offer-modal"><div class="modal-card"><button class="modal-close" id="modal-close">×</button><p class="eyebrow">TEAM RESPONSE</p><h2 id="offer-modal-title">Отправить предложение</h2><p id="offer-modal-subtitle" class="muted"></p><div id="team-recommendations" class="recommendations-panel"></div><label class="card-field"><span>Команда</span><select id="offer-team"></select></label><label class="card-field"><span>Идея решения <i>*</i></span><textarea id="offer-idea" rows="4" placeholder="Что вы предлагаете сделать?"></textarea></label><label class="card-field"><span>План и срок <i>*</i></span><textarea id="offer-plan" rows="3" placeholder="Этапы, технологии, ориентировочный срок"></textarea></label><label class="card-field"><span>Ссылка на прототип</span><input id="offer-link" placeholder="https://..." /></label><div id="offer-ai-review" class="offer-ai-review"></div><button class="primary-btn full" id="submit-offer-btn">Отправить отклик</button></div></div>
+
+  <div class="modal hidden" id="progress-modal"><div class="modal-card"><button class="modal-close" id="progress-modal-close">×</button><p class="eyebrow">AI PROGRESS LOG</p><h2>Зафиксировать фактический прогресс</h2><p id="progress-modal-subtitle" class="muted"></p><label class="card-field"><span>Этап</span><select id="progress-stage"><option>Исследование</option><option>Прототип</option><option>Разработка</option><option>Тестирование</option><option>Финальная передача</option></select></label><label class="card-field"><span>Что фактически сделано <i>*</i></span><textarea id="progress-note" rows="4" placeholder="Коротко опишите результат этапа и приложенные материалы"></textarea></label><label class="card-field"><span>Фактический статус</span><select id="progress-status"><option value="in_progress">В работе</option><option value="done">Этап завершён</option><option value="blocked">Есть блокер</option></select></label><button class="primary-btn full" id="save-progress-btn">Сохранить прогресс</button></div></div>
+
+  <div class="modal hidden" id="dependent-modal">
+    <div class="modal-card dependent-modal-card">
+      <button class="modal-close" id="dependent-modal-close">×</button>
+      <div class="agent-modal-heading"><span class="step-num ai-step">✦</span><div><p class="eyebrow">AI TASK AGENT</p><h2>Создать зависимое задание</h2><p class="muted">Агент подготовит подзадачу на основе карточки заказчика.</p></div><span class="ai-badge">AI</span></div>
+      <div id="dependent-parent-context" class="parent-context"></div>
+      <div class="agent-controls"><label class="card-field"><span>Роль для зависимого задания</span><select id="dependent-role"><option>Исследователь</option><option>UX/UI дизайнер</option><option>Разработчик</option><option>Аналитик</option><option>Контент-специалист</option></select></label><label class="card-field"><span>Фокус подзадачи <i>*</i></span><input id="dependent-focus" placeholder="Например: сценарий записи пациента" /></label></div>
+      <button class="primary-btn full" id="dependent-generate-btn">✦ Сгенерировать карточку агентом</button>
+      <div id="dependent-agent-empty" class="agent-empty"><div class="empty-icon">✦</div><p>Выберите роль и фокус — агент соберёт первый вариант зависимой задачи.</p></div>
+      <div id="dependent-agent-result" class="hidden">
+        <div class="agent-result-note"><strong>Черновик готов.</strong> Проверьте все поля: AI использовал только сведения родительской задачи.</div>
+        <div class="dependent-form-grid"><label class="card-field wide"><span>Название зависимого задания <i>*</i></span><input data-dependent-field="title" /></label><label class="card-field"><span>Цель</span><textarea data-dependent-field="objective" rows="4"></textarea></label><label class="card-field"><span>Входные данные от заказчика</span><textarea data-dependent-field="inputs" rows="4"></textarea></label><label class="card-field"><span>Ожидаемый артефакт</span><textarea data-dependent-field="deliverable" rows="4"></textarea></label><label class="card-field"><span>Критерии приёмки</span><textarea data-dependent-field="acceptanceCriteria" rows="4"></textarea></label><label class="card-field"><span>Зависимость и ограничения</span><textarea data-dependent-field="constraints" rows="4"></textarea></label><label class="card-field"><span>Оценка срока</span><input data-dependent-field="estimate" /></label></div>
+        <div class="agent-modal-actions"><button class="secondary-btn" id="dependent-regenerate-btn">Перегенерировать</button><button class="primary-btn" id="save-dependent-btn">Сохранить карточку</button></div>
+      </div>
+      <details class="prompt-details"><summary>Правила агента</summary><pre>SYSTEM: Создай зависимую задачу только из фактов родительской карточки.
+INPUT: { parentTask, role, focus }
+OUTPUT: { title, objective, inputs, deliverable, acceptanceCriteria, constraints, estimate }
+GUARDRAIL: не добавлять факты, не назначать исполнителя, не публиковать автоматически.</pre></details>
+    </div>
+  </div>
 
   <div class="toast hidden" id="toast"></div>
   <script src="app.js"></script>
