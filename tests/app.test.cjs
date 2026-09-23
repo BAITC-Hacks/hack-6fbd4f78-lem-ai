@@ -1,26 +1,11 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const vm = require('node:vm');
-const source = fs.readFileSync(require('node:path').join(__dirname,'../app.js'),'utf8');
-const html = fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
-const ids = [...html.matchAll(/id="([^"]+)"/g)].map(x=>x[1]);
-const fields = [...html.matchAll(/data-field="([^"]+)"/g)].map(x=>x[1]);
-function boot(saved, fail=false){
- const storage={value:saved,getItem(){return this.value;},setItem(k,v){if(fail)throw Error('quota');this.value=v;},removeItem(){this.value=null;}};
- function element(){return {value:'',checked:false,disabled:false,textContent:'',innerHTML:'',style:{},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},querySelectorAll(){return [];}};}
- const elements=Object.fromEntries(ids.map(id=>[id,element()]));
- const inputs=fields.map(field=>Object.assign(element(),{dataset:{field}}));
- const document={getElementById(id){assert.ok(elements[id], 'Missing DOM id: '+id);return elements[id];},querySelectorAll(q){return q==='[data-field]'?inputs:[];}};
- const context=vm.createContext({document,localStorage:storage,URL,setTimeout(){}});
- vm.runInContext(source,context);
- return {run:s=>vm.runInContext(s,context),elements,inputs,storage};
-}
+const { boot } = require('./harness.cjs');
 const page=boot();const run=page.run;
 assert.equal(run('state.tasks.map(t=>t.score).join()'),'100,90,90,90,90');
 assert.equal(run('calculateScore({contact:"abcdefgh",format:"abcdefgh"}).score'),10);
 assert.equal(run('calculateScore({contact:"   ",format:"abcdefgh"}).score'),0);
 page.inputs.find(e=>e.dataset.field==='title').value='Ручной черновик';
-page.inputs.find(e=>e.dataset.field==='contact').value='user@example.com';
+page.elements['draft-contact'].value='user@example.com';
 run('saveDraft();saveDraft()');
 assert.equal(run('state.tasks.length'),6);
 const restored=boot(page.storage.value);
@@ -37,7 +22,7 @@ page.elements['draft-text'].value='Хотим улучшить запись в �
 run('openOffer("task1")');page.elements['offer-team'].value='team1';page.elements['offer-idea'].value='Создадим удобный экран записи для пациентов';page.elements['offer-plan'].value='За четыре часа подготовим форму и проверим сценарий';
 page.elements['offer-link'].value='javascript:alert(1)';run('submitOffer()');assert.equal(run('state.tasks.find(t=>t.id==="task1").offers.length'),1);
 page.elements['offer-link'].value='https://example.com';run('submitOffer();submitOffer()');assert.equal(run('state.tasks.find(t=>t.id==="task1").offers.length'),2);
-run('decideOffer("task1","p1","accepted");decideOffer("task1",state.tasks.find(t=>t.id==="task1").offers[1].id,"accepted")');assert.equal(run('state.tasks.find(t=>t.id==="task1").offers.filter(o=>o.status==="accepted").length'),1);
+run('decideOffer("task1","p1","accepted");decideOffer("task1",state.tasks.find(t=>t.id==="task1").offers[1].id,"accepted")');assert.equal(run('state.tasks.find(t=>t.id==="task1").offers.filter(o=>o.status==="accepted").length'),2);
 assert.equal(boot(page.storage.value).run('state.tasks.find(t=>t.id==="task1").offers[0].status'),'accepted');
 assert.equal(boot('{bad').run('state.tasks.length'),5);assert.equal(boot('{}').run('state.tasks.length'),5);
 const blocked=boot(null,true);blocked.run('saveDraft()');assert.ok(blocked.elements.toast.textContent.includes('Не удалось сохранить'));

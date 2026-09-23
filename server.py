@@ -4,6 +4,7 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from urllib.parse import unquote, urlsplit
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
@@ -30,6 +31,7 @@ API_KEY = os.environ.get("LLM_API_KEY") or (
 MODEL = os.environ.get("LLM_MODEL", "gpt-5")
 BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").rstrip("/")
 MAX_BODY_BYTES = 120_000
+PUBLIC_FILES = {"/index.html", "/styles.css", "/app.js", "/demo.html"}
 
 DEPENDENT_KEYS = ["title", "goal", "input_data", "expected_artifact", "acceptance_criteria", "constraints"]
 
@@ -197,10 +199,12 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        path = self.path.split("?", 1)[0]
+        path = unquote(urlsplit(self.path).path)
         if path == "/api/llm/status":
             return self.send_json(200, {"configured": bool(API_KEY), "provider": PROVIDER, "model": MODEL})
         requested = "/index.html" if path == "/" else path
+        if requested not in PUBLIC_FILES:
+            return self.send_json(403, {"error": "Forbidden"})
         file = (ROOT / requested.lstrip("/")).resolve()
         if ROOT not in file.parents and file != ROOT:
             return self.send_json(403, {"error": "Forbidden"})
@@ -219,9 +223,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(404, {"error": "Not found"})
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if length > MAX_BODY_BYTES:
+            if length < 0 or length > MAX_BODY_BYTES:
                 raise ApiError("Request is too large", 413)
             body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            if not isinstance(body, dict):
+                raise ApiError("JSON object is required", 400)
             return self.send_json(200, handle_llm(self.path, body))
         except json.JSONDecodeError:
             return self.send_json(400, {"error": "Invalid JSON body"})

@@ -9,6 +9,7 @@ const API_KEY = process.env.LLM_API_KEY || (PROVIDER === 'codex' ? process.env.C
 const MODEL = process.env.LLM_MODEL || 'gpt-5';
 const BASE_URL = (process.env.LLM_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
 const MAX_BODY_BYTES = 120000;
+const PUBLIC_FILES = new Set(['/index.html', '/styles.css', '/app.js', '/demo.html']);
 
 const DEPENDENT_SCHEMA = {
   type: 'object',
@@ -111,6 +112,7 @@ async function callModel(instructions, input, schemaName, schema) {
   if (!API_KEY) throw Object.assign(new Error('LLM API key is not configured'), { statusCode: 503, code: 'LLM_NOT_CONFIGURED' });
   const response = await fetch(`${BASE_URL}/responses`, {
     method: 'POST',
+    signal: AbortSignal.timeout(90000),
     headers: { Authorization: `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: MODEL,
@@ -169,10 +171,15 @@ function contentType(file) {
 }
 
 function serveStatic(req, res) {
-  const pathname = decodeURIComponent(new URL(req.url, `http://${req.headers.host || 'localhost'}`).pathname);
+  let pathname;
+  try { pathname = decodeURIComponent(new URL(req.url, `http://${req.headers.host || 'localhost'}`).pathname); }
+  catch { return sendJson(res, 400, { error: 'Invalid URL' }); }
   const requested = pathname === '/' ? '/index.html' : pathname;
+  if (!PUBLIC_FILES.has(requested)) return sendJson(res, 403, { error: 'Forbidden' });
   const file = path.resolve(ROOT, `.${requested}`);
-  if (!file.startsWith(`${ROOT}${path.sep}`) && file !== ROOT) return sendJson(res, 403, { error: 'Forbidden' });
+  try {
+    if (path.dirname(fs.realpathSync(file)) !== ROOT) return sendJson(res, 403, { error: 'Forbidden' });
+  } catch { return sendJson(res, 404, { error: 'Not found' }); }
   fs.readFile(file, (error, data) => {
     if (error) return sendJson(res, 404, { error: 'Not found' });
     res.writeHead(200, { 'Content-Type': contentType(file), 'Cache-Control': 'no-cache' });
@@ -190,7 +197,11 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, { configured: Boolean(API_KEY), provider: PROVIDER, model: MODEL });
   }
   if (req.method === 'POST' && (pathname === '/api/llm/decompose' || pathname === '/api/llm/clarify')) {
-    try { return sendJson(res, 200, await handleLLM(pathname, await readBody(req))); }
+    try {
+      const body = await readBody(req);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return sendJson(res, 400, { error: 'JSON object is required' });
+      return sendJson(res, 200, await handleLLM(pathname, body));
+    }
     catch (error) { return sendJson(res, error.statusCode || 500, { error: error.message, code: error.code || 'LLM_ERROR' }); }
   }
   if (req.method === 'GET') return serveStatic(req, res);

@@ -4,1542 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Sana — геймификация бизнес-задач</title>
-    <style>
-      :root {
-        --navy: #142b4d;
-        --navy-2: #1f4675;
-        --ink: #1b2a3a;
-        --muted: #748398;
-        --line: #dce5ee;
-        --bg: #f4f7fb;
-        --card: #fff;
-        --teal: #1aa891;
-        --teal-dark: #0e806f;
-        --orange: #f29b4a;
-        --red: #e36963;
-        --shadow: 0 12px 35px rgba(27, 57, 91, 0.08);
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font:
-          14px/1.45 Inter,
-          ui-sans-serif,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-      }
-      .app-shell {
-        min-height: 100vh;
-      }
-      .topbar {
-        height: 62px;
-        background: var(--navy);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 32px;
-      }
-      .brand {
-        font-weight: 800;
-        letter-spacing: 0.2px;
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        font-size: 20px;
-      }
-      .brand small {
-        font-size: 10px;
-        font-weight: 500;
-        opacity: 0.62;
-        padding: 3px 7px;
-        border: 1px solid rgba(255, 255, 255, 0.26);
-        border-radius: 5px;
-        margin-left: 4px;
-      }
-      .brand-mark {
-        color: #7ee4d1;
-        font-size: 23px;
-      }
-      .topbar-status {
-        font-size: 11px;
-        color: #b8c8dc;
-      }
-      .live-dot {
-        display: inline-block;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #65d7bd;
-        margin-right: 6px;
-        box-shadow: 0 0 0 4px rgba(101, 215, 189, 0.12);
-      }
-      .workspace {
-        display: flex;
-        min-height: calc(100vh - 62px);
-      }
-      .sidebar {
-        width: 235px;
-        background: #fff;
-        border-right: 1px solid var(--line);
-        padding: 22px 14px;
-        display: flex;
-        flex-direction: column;
-      }
-      .role-switcher {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        background: #eef3f8;
-        border-radius: 9px;
-        padding: 3px;
-        margin: 0 6px 24px;
-      }
-      .role-btn {
-        border: 0;
-        background: transparent;
-        border-radius: 7px;
-        padding: 9px 3px;
-        color: var(--muted);
-        font-weight: 700;
-        font-size: 12px;
-        cursor: pointer;
-      }
-      .role-btn.active {
-        background: #fff;
-        color: var(--navy);
-        box-shadow: 0 3px 10px rgba(28, 57, 86, 0.12);
-      }
-      .nav-list {
-        display: grid;
-        gap: 5px;
-      }
-      .nav-btn {
-        border: 0;
-        background: transparent;
-        border-radius: 8px;
-        color: #63768d;
-        text-align: left;
-        padding: 12px 11px;
-        display: flex;
-        gap: 11px;
-        align-items: center;
-        cursor: pointer;
-        font-weight: 600;
-      }
-      .nav-btn span {
-        font-size: 18px;
-        width: 18px;
-        text-align: center;
-        color: #8b9aae;
-      }
-      .nav-btn b {
-        margin-left: auto;
-        color: #9aa8b7;
-        font-size: 11px;
-      }
-      .nav-btn:hover,
-      .nav-btn.active {
-        background: #edf7f6;
-        color: var(--teal-dark);
-      }
-      .nav-btn.active span {
-        color: var(--teal);
-      }
-      .sidebar-bottom {
-        margin-top: auto;
-        display: grid;
-        gap: 12px;
-      }
-      .mini-kpi {
-        background: var(--navy);
-        color: #fff;
-        border-radius: 11px;
-        padding: 14px;
-      }
-      .mini-kpi span,
-      .mini-kpi small {
-        display: block;
-        color: #abc0d8;
-        font-size: 11px;
-      }
-      .mini-kpi strong {
-        display: block;
-        font-size: 27px;
-        margin: 3px 0;
-      }
-      .guardrail {
-        border: 1px solid #d6eee9;
-        background: #f3fbfa;
-        border-radius: 11px;
-        padding: 12px;
-        color: var(--teal-dark);
-      }
-      .guardrail span {
-        font-weight: 800;
-        font-size: 12px;
-      }
-      .guardrail small {
-        display: block;
-        color: #6b8c89;
-        font-size: 10px;
-        margin-top: 4px;
-      }
-      .main-content {
-        flex: 1;
-        padding: 35px 46px 60px;
-        max-width: 1500px;
-        margin: 0 auto;
-        width: 100%;
-      }
-      .view {
-        display: none;
-      }
-      .view.active {
-        display: block;
-      }
-      .page-heading {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 25px;
-        margin-bottom: 28px;
-      }
-      .eyebrow {
-        color: var(--teal-dark);
-        font-size: 10px;
-        font-weight: 900;
-        letter-spacing: 1.6px;
-        margin: 0 0 6px;
-      }
-      .page-heading h1 {
-        font-size: 29px;
-        line-height: 1.15;
-        margin: 0 0 8px;
-        color: var(--navy);
-      }
-      .subtitle {
-        color: var(--muted);
-        margin: 0;
-        max-width: 750px;
-      }
-      .heading-chip,
-      .catalog-total {
-        background: #fff;
-        border: 1px solid var(--line);
-        padding: 10px 14px;
-        border-radius: 9px;
-        color: #688099;
-        font-size: 11px;
-        white-space: nowrap;
-      }
-      .chip-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--teal);
-        display: inline-block;
-        margin-right: 7px;
-      }
-      .catalog-total {
-        text-align: right;
-      }
-      .catalog-total strong {
-        display: block;
-        color: var(--navy);
-        font-size: 25px;
-        line-height: 1;
-      }
-      .catalog-total span {
-        font-size: 10px;
-      }
-      .builder-layout {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
-      }
-      .panel {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 13px;
-        box-shadow: var(--shadow);
-      }
-      .input-panel,
-      .ai-panel {
-        min-height: 380px;
-        padding: 24px;
-      }
-      .panel-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
-      }
-      .panel-head > div:first-child {
-        display: flex;
-        gap: 12px;
-      }
-      .panel-head h2 {
-        font-size: 15px;
-        margin: 0 0 2px;
-        color: var(--navy);
-      }
-      .panel-head p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 11px;
-      }
-      .step-num {
-        background: #e6f4f1;
-        color: var(--teal-dark);
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 900;
-        font-size: 12px;
-        flex: none;
-      }
-      .ai-step {
-        background: #fff3e4;
-        color: #ed8a30;
-      }
-      .required {
-        font-size: 10px;
-        background: #f8eef0;
-        color: #c26773;
-        border-radius: 5px;
-        padding: 4px 6px;
-      }
-      .ai-badge {
-        font-size: 10px;
-        color: #d47b26;
-        background: #fff3df;
-        border-radius: 5px;
-        padding: 4px 7px;
-        font-weight: 800;
-      }
-      .field-label {
-        display: block;
-        font-weight: 700;
-        font-size: 11px;
-        color: #62758b;
-        margin-bottom: 7px;
-      }
-      .field-group {
-        flex: 1;
-      }
-      .input-panel textarea,
-      .input-panel input,
-      .input-panel select,
-      .card-field input,
-      .card-field textarea,
-      .card-field select,
-      .toolbar select,
-      .search-wrap input {
-        font: inherit;
-        border: 1px solid var(--line);
-        border-radius: 7px;
-        background: #fcfdff;
-        color: var(--ink);
-        padding: 10px 11px;
-        outline: none;
-        width: 100%;
-        resize: vertical;
-      }
-      .input-panel textarea:focus,
-      .input-panel input:focus,
-      .card-field input:focus,
-      .card-field textarea:focus {
-        border-color: #65cfc0;
-        box-shadow: 0 0 0 3px rgba(26, 168, 145, 0.1);
-      }
-      .form-row {
-        display: flex;
-        gap: 11px;
-        margin-top: 13px;
-      }
-      .primary-btn,
-      .secondary-btn,
-      .text-btn {
-        border: 0;
-        border-radius: 7px;
-        padding: 11px 16px;
-        font: inherit;
-        font-size: 12px;
-        font-weight: 800;
-        cursor: pointer;
-      }
-      .primary-btn {
-        background: var(--teal);
-        color: #fff;
-        box-shadow: 0 5px 13px rgba(26, 168, 145, 0.2);
-      }
-      .primary-btn:hover {
-        background: var(--teal-dark);
-      }
-      .primary-btn:disabled {
-        background: #b9c8d3;
-        cursor: not-allowed;
-        box-shadow: none;
-      }
-      .secondary-btn {
-        background: #edf3f7;
-        color: #4a6680;
-      }
-      .text-btn {
-        background: transparent;
-        color: var(--teal-dark);
-        padding-left: 0;
-        padding-right: 0;
-      }
-      .full {
-        width: 100%;
-        margin-top: 16px;
-      }
-      .empty-state {
-        text-align: center;
-        padding: 68px 10px;
-        color: #9aa8b7;
-      }
-      .empty-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: #fff4e5;
-        color: #efa04f;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 21px;
-        margin-bottom: 12px;
-      }
-      .empty-state p {
-        margin: 0;
-        font-size: 12px;
-      }
-      .hidden {
-        display: none !important;
-      }
-      .ai-result {
-        display: grid;
-        gap: 12px;
-      }
-      .ai-summary {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px;
-        background: #fff8ed;
-        border: 1px solid #f6e1c4;
-        border-radius: 8px;
-        color: #8b6438;
-        font-size: 12px;
-      }
-      .question-list {
-        display: grid;
-        gap: 9px;
-      }
-      .question-item {
-        border: 1px solid #e6edf2;
-        border-radius: 8px;
-        padding: 10px;
-        background: #fbfcfe;
-      }
-      .question-item strong {
-        font-size: 11px;
-        display: block;
-        color: var(--navy);
-        margin-bottom: 6px;
-      }
-      .question-item input {
-        width: 100%;
-        border: 0;
-        border-bottom: 1px solid #ccd9e3;
-        padding: 5px 2px;
-        background: transparent;
-        outline: 0;
-        font: inherit;
-        font-size: 12px;
-      }
-      .prompt-details {
-        margin-top: 18px;
-        border-top: 1px solid var(--line);
-        padding-top: 13px;
-        color: #72859a;
-        font-size: 11px;
-      }
-      .prompt-details summary {
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .prompt-details pre {
-        white-space: pre-wrap;
-        background: #152b48;
-        color: #cfe8e2;
-        border-radius: 7px;
-        padding: 11px;
-        font-size: 10px;
-        line-height: 1.5;
-        overflow: auto;
-      }
-      .card-panel {
-        padding: 24px;
-      }
-      .card-head {
-        margin-bottom: 10px;
-      }
-      .score-bubble {
-        display: flex;
-        align-items: baseline;
-        gap: 3px;
-        color: #8b9bad;
-      }
-      .score-bubble strong {
-        color: var(--teal-dark);
-        font-size: 30px;
-        line-height: 1;
-      }
-      .score-bubble span {
-        font-size: 12px;
-      }
-      .score-track {
-        height: 8px;
-        background: #edf1f4;
-        border-radius: 9px;
-        overflow: hidden;
-      }
-      .score-track span {
-        display: block;
-        height: 100%;
-        width: 0;
-        background: linear-gradient(90deg, var(--orange), var(--teal));
-        border-radius: 9px;
-        transition: width 0.35s;
-      }
-      .readiness-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 10px 0 20px;
-        color: var(--muted);
-        font-size: 11px;
-      }
-      .readiness {
-        border-radius: 5px;
-        padding: 4px 8px;
-        font-weight: 800;
-      }
-      .readiness.draft {
-        background: #fff3e6;
-        color: #d77b28;
-      }
-      .readiness.working {
-        background: #eaf3ff;
-        color: #3d78b9;
-      }
-      .readiness.ready {
-        background: #e9f8f2;
-        color: #178c70;
-      }
-      .readiness.priority {
-        background: #e9efff;
-        color: #536cc3;
-      }
-      .missing-banner {
-        background: #fff7e9;
-        border: 1px solid #f4dcac;
-        color: #966528;
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 11px;
-        margin: 9px 0;
-      }
-      .card-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 13px;
-      }
-      .card-field {
-        display: block;
-      }
-      .card-field.wide {
-        grid-column: 1/-1;
-      }
-      .card-field > span {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: #556b82;
-        font-size: 11px;
-        font-weight: 800;
-        margin-bottom: 6px;
-      }
-      .card-field i {
-        font-style: normal;
-        color: #dd766d;
-      }
-      .card-field em {
-        margin-left: auto;
-        font-style: normal;
-        color: #8aa0b3;
-        font-size: 10px;
-        font-weight: 700;
-      }
-      .card-field input,
-      .card-field textarea {
-        font-size: 12px;
-        background: #fbfdff;
-      }
-      .card-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        border-top: 1px solid var(--line);
-        margin-top: 18px;
-        padding-top: 18px;
-      }
-      .card-actions .primary-btn {
-        margin-left: auto;
-      }
-      .confirm-check {
-        font-size: 11px;
-        color: #62778e;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .confirm-check input {
-        accent-color: var(--teal);
-      }
-      .toolbar {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-      .search-wrap {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex: 1;
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 0 12px;
-        color: #8ba0b3;
-      }
-      .search-wrap input {
-        border: 0;
-        padding: 10px 0;
-      }
-      .toolbar select {
-        width: auto;
-        min-width: 190px;
-        background: #fff;
-        color: #62758b;
-      }
-      .catalog-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 16px;
-      }
-      .task-card {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 18px;
-        box-shadow: var(--shadow);
-        display: flex;
-        flex-direction: column;
-        min-height: 270px;
-      }
-      .task-card-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        align-items: flex-start;
-      }
-      .task-card h3 {
-        margin: 0;
-        color: var(--navy);
-        font-size: 15px;
-      }
-      .industry-tag {
-        font-size: 10px;
-        color: #778ba0;
-        margin: 6px 0 11px;
-      }
-      .score-mini {
-        background: #e9f8f3;
-        color: var(--teal-dark);
-        font-size: 12px;
-        font-weight: 900;
-        padding: 6px 8px;
-        border-radius: 7px;
-        white-space: nowrap;
-      }
-      .task-card p {
-        color: #718398;
-        font-size: 11px;
-        margin: 0 0 12px;
-      }
-      .task-card .card-meta {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        margin-top: auto;
-      }
-      .meta-tag {
-        padding: 4px 7px;
-        border-radius: 5px;
-        background: #f0f4f7;
-        color: #708398;
-        font-size: 10px;
-      }
-      .task-card .primary-btn {
-        margin-top: 14px;
-      }
-      .offers-list {
-        display: grid;
-        gap: 16px;
-      }
-      .offer-task {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 19px;
-      }
-      .offer-task-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 13px;
-        margin-bottom: 14px;
-      }
-      .offer-task h3 {
-        margin: 0;
-        color: var(--navy);
-        font-size: 15px;
-      }
-      .offer-item {
-        border: 1px solid #e4ebf0;
-        border-radius: 9px;
-        padding: 14px;
-        margin-top: 10px;
-        display: grid;
-        grid-template-columns: 145px 1fr auto;
-        gap: 14px;
-        align-items: start;
-      }
-      .offer-item h4 {
-        margin: 0;
-        color: var(--navy);
-        font-size: 12px;
-      }
-      .offer-item p {
-        margin: 4px 0 0;
-        color: #718398;
-        font-size: 11px;
-        white-space: pre-line;
-      }
-      .offer-label {
-        font-size: 10px;
-        color: #93a2b2;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .offer-actions {
-        display: flex;
-        gap: 7px;
-      }
-      .accept-btn,
-      .reject-btn {
-        border: 0;
-        border-radius: 6px;
-        padding: 8px 10px;
-        font: inherit;
-        font-size: 11px;
-        font-weight: 800;
-        cursor: pointer;
-      }
-      .accept-btn {
-        background: #e7f7f1;
-        color: #14896f;
-      }
-      .reject-btn {
-        background: #fff0f0;
-        color: #c2666e;
-      }
-      .decision {
-        font-size: 10px;
-        padding: 5px 8px;
-        border-radius: 5px;
-        font-weight: 800;
-      }
-      .decision.accepted {
-        background: #e8f8f1;
-        color: #168a70;
-      }
-      .decision.rejected {
-        background: #fff0f0;
-        color: #c2666e;
-      }
-      .data-tabs {
-        display: flex;
-        gap: 7px;
-        border-bottom: 1px solid var(--line);
-        margin-bottom: 18px;
-      }
-      .data-tab {
-        background: transparent;
-        border: 0;
-        padding: 11px 14px;
-        font: inherit;
-        font-size: 12px;
-        color: #7b8d9f;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-      }
-      .data-tab.active {
-        color: var(--teal-dark);
-        border-color: var(--teal);
-        font-weight: 800;
-      }
-      .data-view {
-        display: none;
-      }
-      .data-view.active {
-        display: block;
-      }
-      .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        overflow: hidden;
-        font-size: 11px;
-      }
-      .data-table th,
-      .data-table td {
-        text-align: left;
-        padding: 12px;
-        border-bottom: 1px solid #e9eef2;
-        vertical-align: top;
-      }
-      .data-table th {
-        background: #f4f7fa;
-        color: #65798f;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .data-table td strong {
-        color: var(--navy);
-      }
-      .demo-timeline {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 25px 26px;
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-      }
-      .demo-step {
-        display: flex;
-        gap: 9px;
-        flex: 1;
-      }
-      .demo-step > span {
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #e9eff5;
-        color: #71869d;
-        font-weight: 900;
-        font-size: 11px;
-        flex: none;
-      }
-      .demo-step.done > span {
-        background: #dff5ef;
-        color: var(--teal-dark);
-      }
-      .demo-step strong {
-        display: block;
-        font-size: 11px;
-        color: var(--navy);
-      }
-      .demo-step p {
-        font-size: 10px;
-        color: var(--muted);
-        margin: 4px 0 0;
-      }
-      .demo-line {
-        height: 1px;
-        background: #d8e3eb;
-        width: 26px;
-        margin-top: 12px;
-      }
-      .demo-note {
-        display: flex;
-        gap: 12px;
-        background: #eaf6ff;
-        border: 1px solid #c9e3f4;
-        border-radius: 9px;
-        padding: 14px;
-        margin-top: 18px;
-        color: #426e91;
-      }
-      .note-icon {
-        font-size: 18px;
-      }
-      .demo-note strong {
-        font-size: 12px;
-      }
-      .demo-note p {
-        font-size: 11px;
-        margin: 3px 0 0;
-      }
-      .architecture-card {
-        background: var(--navy);
-        color: #fff;
-        border-radius: 12px;
-        margin-top: 18px;
-        padding: 23px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-      }
-      .architecture-card .eyebrow {
-        color: #76dbc9;
-      }
-      .architecture-card h2 {
-        margin: 0 0 6px;
-        font-size: 17px;
-      }
-      .architecture-card p {
-        color: #afc4d8;
-        font-size: 11px;
-        margin: 0;
-        max-width: 520px;
-      }
-      .arch-flow {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #c9dbec;
-        font-size: 11px;
-      }
-      .arch-flow span {
-        background: #274b73;
-        border: 1px solid #44688e;
-        border-radius: 5px;
-        padding: 7px 8px;
-      }
-      .arch-flow b {
-        color: #75d7c5;
-      }
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(16, 39, 67, 0.42);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        z-index: 10;
-      }
-      .modal-card {
-        background: #fff;
-        border-radius: 13px;
-        padding: 25px;
-        width: min(540px, 100%);
-        box-shadow: 0 20px 60px rgba(15, 37, 64, 0.25);
-        position: relative;
-      }
-      .modal-card h2 {
-        color: var(--navy);
-        margin: 0 0 6px;
-        font-size: 20px;
-      }
-      .modal-card .card-field {
-        margin-top: 14px;
-      }
-      .modal-close {
-        position: absolute;
-        right: 15px;
-        top: 10px;
-        border: 0;
-        background: transparent;
-        color: #8da0b2;
-        font-size: 25px;
-        cursor: pointer;
-      }
-      .muted {
-        color: var(--muted);
-        font-size: 11px;
-      }
-      .toast {
-        position: fixed;
-        right: 25px;
-        bottom: 25px;
-        background: var(--navy);
-        color: #fff;
-        border-radius: 8px;
-        padding: 12px 16px;
-        box-shadow: var(--shadow);
-        font-size: 12px;
-        z-index: 20;
-      }
-      .toast.success {
-        background: var(--teal-dark);
-      }
-      @media (max-width: 1000px) {
-        .sidebar {
-          width: 190px;
-        }
-        .main-content {
-          padding: 27px 24px;
-        }
-        .catalog-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .demo-timeline {
-          flex-wrap: wrap;
-        }
-        .demo-line {
-          display: none;
-        }
-      }
-      @media (max-width: 700px) {
-        .topbar {
-          padding: 0 16px;
-        }
-        .topbar-status {
-          display: none;
-        }
-        .workspace {
-          display: block;
-        }
-        .sidebar {
-          width: 100%;
-          border-right: 0;
-          border-bottom: 1px solid var(--line);
-          padding: 10px;
-        }
-        .role-switcher {
-          margin-bottom: 8px;
-        }
-        .nav-list {
-          display: flex;
-          overflow: auto;
-        }
-        .nav-btn {
-          white-space: nowrap;
-          padding: 8px;
-        }
-        .nav-btn b {
-          display: none;
-        }
-        .sidebar-bottom {
-          display: none;
-        }
-        .main-content {
-          padding: 25px 14px;
-        }
-        .builder-layout,
-        .catalog-grid,
-        .card-grid {
-          grid-template-columns: 1fr;
-        }
-        .page-heading {
-          display: block;
-        }
-        .heading-chip,
-        .catalog-total {
-          display: inline-block;
-          margin-top: 15px;
-        }
-        .card-actions {
-          flex-wrap: wrap;
-        }
-        .card-actions .primary-btn {
-          margin-left: 0;
-        }
-        .offer-item {
-          grid-template-columns: 1fr;
-        }
-        .toolbar {
-          display: grid;
-        }
-        .toolbar select {
-          width: 100%;
-        }
-        .architecture-card {
-          display: block;
-        }
-        .arch-flow {
-          margin-top: 18px;
-          flex-wrap: wrap;
-        }
-      }
-      .task-card-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 14px;
-      }
-      .task-card-actions .primary-btn,
-      .task-card-actions .secondary-btn {
-        flex: 1;
-        margin-top: 0;
-        padding-left: 9px;
-        padding-right: 9px;
-        font-size: 11px;
-      }
-      .task-card-actions .secondary-btn {
-        background: #fff5e8;
-        color: #c87528;
-        border: 1px solid #f2d6ae;
-      }
-      .agent-banner {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        background: #fff8ed;
-        border: 1px solid #f1ddbe;
-        border-radius: 12px;
-        padding: 15px 17px;
-        margin-bottom: 18px;
-        color: #8b6438;
-      }
-      .agent-banner-icon {
-        width: 34px;
-        height: 34px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background: #fff0d9;
-        color: #e08a31;
-        font-size: 18px;
-        flex: none;
-      }
-      .agent-banner strong {
-        color: #805b32;
-        font-size: 13px;
-      }
-      .agent-banner p {
-        margin: 3px 0 0;
-        font-size: 11px;
-        color: #977b5c;
-      }
-      .agent-banner .ai-badge {
-        margin-left: auto;
-        flex: none;
-      }
-      .dependent-grid {
-        display: grid;
-        gap: 16px;
-      }
-      .dependent-card {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 19px;
-        box-shadow: var(--shadow);
-      }
-      .dependent-card-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 15px;
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 13px;
-        margin-bottom: 14px;
-      }
-      .dependent-card h3 {
-        margin: 6px 0 4px;
-        color: var(--navy);
-        font-size: 16px;
-      }
-      .dependent-card-head p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 11px;
-      }
-      .dependent-card-head p strong {
-        color: #58728b;
-      }
-      .dependent-status {
-        font-size: 10px;
-        padding: 4px 7px;
-        border-radius: 5px;
-        background: #fff2df;
-        color: #c97a2d;
-        font-weight: 800;
-      }
-      .role-pill {
-        background: #edf7f6;
-        color: var(--teal-dark);
-        padding: 6px 9px;
-        border-radius: 6px;
-        font-size: 10px;
-        font-weight: 800;
-        white-space: nowrap;
-      }
-      .dependent-card-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-      }
-      .dependent-card-grid > div {
-        background: #f8fafc;
-        border-radius: 8px;
-        padding: 11px;
-      }
-      .dependent-card-grid span {
-        display: block;
-        color: #8b9cad;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        margin-bottom: 5px;
-      }
-      .dependent-card-grid p {
-        margin: 0;
-        color: #5d7186;
-        font-size: 11px;
-        white-space: pre-line;
-      }
-      .dependent-card-grid p strong {
-        display: block;
-        color: #d17e2d;
-        margin-top: 6px;
-      }
-      .dependent-modal-card {
-        width: min(760px, 100%);
-        max-height: calc(100vh - 40px);
-        overflow: auto;
-      }
-      .agent-modal-heading {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-        margin-bottom: 14px;
-      }
-      .agent-modal-heading h2 {
-        margin: 0 0 3px;
-      }
-      .agent-modal-heading .ai-badge {
-        margin-left: auto;
-      }
-      .parent-context {
-        position: relative;
-        background: #f1f7fb;
-        border: 1px solid #dce8f0;
-        border-radius: 8px;
-        padding: 11px 12px;
-        margin-bottom: 14px;
-      }
-      .parent-context .parent-label {
-        display: block;
-        color: #7d91a5;
-        font-size: 9px;
-        font-weight: 900;
-        letter-spacing: 1px;
-      }
-      .parent-context strong {
-        display: block;
-        color: var(--navy);
-        font-size: 13px;
-        margin: 3px 0;
-      }
-      .parent-context p {
-        margin: 0;
-        color: #667b90;
-        font-size: 11px;
-        max-width: 85%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .parent-score {
-        position: absolute;
-        right: 12px;
-        top: 12px;
-        color: var(--teal-dark);
-        font-size: 10px;
-        font-weight: 800;
-      }
-      .agent-controls {
-        display: grid;
-        grid-template-columns: 1fr 1.4fr;
-        gap: 11px;
-      }
-      .agent-empty {
-        text-align: center;
-        padding: 22px 10px;
-        color: #9aa8b7;
-      }
-      .agent-empty .empty-icon {
-        margin-bottom: 5px;
-      }
-      .agent-empty p {
-        margin: 0;
-        font-size: 11px;
-      }
-      .agent-result-note {
-        background: #eaf7f3;
-        border: 1px solid #ccebe3;
-        color: #247866;
-        border-radius: 7px;
-        padding: 9px 11px;
-        font-size: 11px;
-        margin-top: 15px;
-      }
-      .dependent-form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 11px;
-        margin-top: 13px;
-      }
-      .dependent-form-grid .wide {
-        grid-column: 1/-1;
-      }
-      .dependent-form-grid .card-field textarea,
-      .dependent-form-grid .card-field input {
-        font-size: 11px;
-      }
-      .agent-modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 9px;
-        border-top: 1px solid var(--line);
-        margin-top: 15px;
-        padding-top: 15px;
-      }
-      .agent-modal-actions .secondary-btn {
-        margin-right: auto;
-      }
-      @media (max-width: 700px) {
-        .task-card-actions {
-          display: grid;
-        }
-        .agent-banner {
-          align-items: flex-start;
-        }
-        .agent-banner .ai-badge {
-          margin-left: 0;
-        }
-        .dependent-card-grid,
-        .dependent-form-grid,
-        .agent-controls {
-          grid-template-columns: 1fr;
-        }
-        .dependent-form-grid .wide {
-          grid-column: auto;
-        }
-        .dependent-card-head {
-          display: block;
-        }
-        .role-pill {
-          display: inline-block;
-          margin-top: 10px;
-        }
-        .parent-score {
-          position: static;
-          display: block;
-          margin-top: 6px;
-        }
-        .parent-context p {
-          max-width: 100%;
-        }
-      }
-      .offer-head-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .compare-btn {
-        padding: 7px 9px;
-        font-size: 10px;
-      }
-      .recommendations-panel {
-        background: #f7fbfd;
-        border: 1px solid #dce8ef;
-        border-radius: 8px;
-        padding: 11px;
-        margin: 14px 0;
-      }
-      .recommendations-head,
-      .comparison-title {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 8px;
-        color: var(--navy);
-        font-size: 11px;
-      }
-      .recommendations-head span,
-      .comparison-title span {
-        font-size: 10px;
-        color: #8b9cac;
-        font-weight: 500;
-      }
-      .recommendation-item,
-      .comparison-row {
-        display: grid;
-        grid-template-columns: 23px 1fr auto;
-        gap: 8px;
-        align-items: start;
-        padding: 8px 0;
-        border-top: 1px solid #e5edf2;
-      }
-      .recommendation-item:first-of-type,
-      .comparison-row:first-of-type {
-        border-top: 0;
-      }
-      .recommendation-rank {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #e6f4f1;
-        color: var(--teal-dark);
-        font-size: 10px;
-        font-weight: 900;
-      }
-      .recommendation-item strong,
-      .comparison-row strong {
-        font-size: 11px;
-        color: var(--navy);
-      }
-      .recommendation-item p,
-      .comparison-row p {
-        margin: 2px 0 0;
-        color: #72859a;
-        font-size: 10px;
-        line-height: 1.35;
-      }
-      .recommendation-item > b,
-      .comparison-row > b {
-        color: var(--teal-dark);
-        font-size: 11px;
-        white-space: nowrap;
-      }
-      .offer-ai-review {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        align-items: center;
-        border-radius: 7px;
-        padding: 9px 11px;
-        margin-top: 12px;
-        font-size: 10px;
-      }
-      .offer-ai-review strong {
-        font-size: 11px;
-      }
-      .offer-ai-review span {
-        color: #7b8d9d;
-        text-align: right;
-      }
-      .offer-ai-review.incomplete {
-        background: #fff7e9;
-        border: 1px solid #f3dfb8;
-        color: #97672b;
-      }
-      .offer-ai-review.complete {
-        background: #eaf7f3;
-        border: 1px solid #ccebe3;
-        color: #1b7d69;
-      }
-      .offer-comparison {
-        background: #fbfcfe;
-        border: 1px solid #e0e9ef;
-        border-radius: 8px;
-        padding: 11px;
-        margin-bottom: 12px;
-      }
-      .progress-btn {
-        border: 0;
-        background: #eaf6ff;
-        color: #39759b;
-        border-radius: 6px;
-        padding: 7px 9px;
-        font: inherit;
-        font-size: 10px;
-        font-weight: 800;
-        cursor: pointer;
-      }
-      .progress-history {
-        display: grid;
-        gap: 3px;
-        background: #f3f8fb;
-        border-left: 3px solid #76b4d2;
-        border-radius: 4px;
-        padding: 7px 8px;
-        margin-top: 8px;
-        color: #54738a;
-        font-size: 10px;
-      }
-      .progress-history span {
-        white-space: pre-line;
-      }
-      .progress-history strong {
-        font-size: 10px;
-        color: #397395;
-      }
-      @media (max-width: 700px) {
-        .offer-head-actions,
-        .offer-ai-review {
-          display: grid;
-        }
-        .offer-ai-review span {
-          text-align: left;
-        }
-        .recommendations-head,
-        .comparison-title {
-          align-items: flex-start;
-          flex-direction: column;
-        }
-      }
-      .score-breakdown {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 8px;
-        list-style: none;
-        padding: 12px;
-        background: #f4f8fa;
-        border-radius: 8px;
-        font-size: 12px;
-      }
-      .task-card details {
-        margin-bottom: 12px;
-      }
-      .task-card details summary {
-        cursor: pointer;
-        font-size: 12px;
-      }
-    </style>
+    <style>:root{--sidebar:#142b23;--sidebar-soft:#1e3c31;--ink:#172b25;--muted:#64746d;--muted-strong:#50635b;--line:#dfe7e2;--line-strong:#cbd8d1;--bg:#f6f8f7;--surface:#fff;--surface-soft:#f1f6f3;--accent:#087f5b;--accent-dark:#056044;--accent-soft:#e7f5ee;--warning:#a76516;--warning-soft:#fff4df;--danger:#a74646;--danger-soft:#fff0f0;--info:#356887;--info-soft:#edf6fb;--shadow:0 8px 24px rgba(20,43,35,.06);--r-control:8px;--r-panel:12px;--ease:180ms ease}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;min-width:320px;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}button,input,textarea,select{font:inherit}button{-webkit-tap-highlight-color:transparent}.hidden{display:none!important}
+.app-shell{min-height:100vh}.topbar{height:56px;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 28px;background:var(--sidebar);color:#fff}.brand{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:800;letter-spacing:-.2px}.brand-mark{color:#65d7ad;font-size:20px}.brand small{color:#a9c8bb;font-size:11px;font-weight:600}.topbar-status{color:#a9c8bb;font-size:12px}.live-dot{display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:#65d7ad}
+.workspace{display:flex;min-height:calc(100vh - 56px)}.sidebar{width:232px;flex:0 0 232px;display:flex;flex-direction:column;padding:20px 12px;background:var(--sidebar);color:#d7e6df}.role-switcher{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin:0 4px 26px;padding:3px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.06)}.role-btn{min-height:38px;padding:7px 4px;border:0;border-radius:7px;background:transparent;color:#a9c8bb;cursor:pointer;font-size:13px;font-weight:700;transition:background var(--ease),color var(--ease)}.role-btn:hover{color:#fff;background:rgba(255,255,255,.08)}.role-btn.active{background:#fff;color:var(--sidebar);box-shadow:0 4px 12px rgba(0,0,0,.14)}.nav-list{display:grid;gap:4px}.nav-btn{position:relative;display:flex;align-items:center;gap:11px;width:100%;min-height:44px;padding:9px 11px;border:0;border-radius:8px;background:transparent;color:#b1cbbf;text-align:left;cursor:pointer;font-size:14px;font-weight:650;transition:background var(--ease),color var(--ease)}.nav-btn span{width:19px;color:#82aa99;font-size:17px;line-height:1;text-align:center}.nav-btn b{margin-left:auto;color:#9fc0b1;font-size:12px;font-variant-numeric:tabular-nums}.nav-btn:hover{background:rgba(255,255,255,.07);color:#fff}.nav-btn.active{background:var(--sidebar-soft);color:#fff}.nav-btn.active:before{position:absolute;left:0;width:3px;height:24px;border-radius:0 4px 4px 0;background:#65d7ad;content:""}.nav-btn.active span{color:#65d7ad}.sidebar-bottom{display:grid;gap:12px;margin-top:auto;padding-top:28px}.mini-kpi,.guardrail{border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:13px}.mini-kpi{background:rgba(255,255,255,.06)}.mini-kpi span,.mini-kpi small{display:block;color:#9fc0b1;font-size:12px}.mini-kpi strong{display:block;margin:3px 0;color:#fff;font-size:27px;line-height:1}.guardrail{background:rgba(8,127,91,.16);color:#9de0c5}.guardrail span{font-size:12px;font-weight:800}.guardrail small{display:block;margin-top:4px;color:#a9c8bb;font-size:12px;line-height:1.4}
+.main-content{width:100%;max-width:1500px;margin:0 auto;padding:32px 40px 64px}.view{display:none}.view.active{display:block}.page-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px}.eyebrow{margin:0 0 7px;color:var(--accent);font-size:11px;font-weight:800;letter-spacing:1.25px;text-transform:uppercase}.page-heading h1{margin:0 0 8px;color:var(--ink);font-size:clamp(26px,2.4vw,32px);line-height:1.15;letter-spacing:-.6px}.subtitle{max-width:760px;margin:0;color:var(--muted);font-size:15px}.heading-chip,.catalog-total{border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);font-size:12px;white-space:nowrap}.heading-chip{padding:10px 13px}.chip-dot{display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:50%;background:var(--accent)}.catalog-total{min-width:108px;padding:11px 14px;text-align:right}.catalog-total strong{display:block;color:var(--ink);font-size:26px;line-height:1;font-variant-numeric:tabular-nums}.catalog-total span{font-size:12px}
+.builder-layout{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(320px,.96fr);gap:20px;margin-bottom:20px}.panel{border:1px solid var(--line);border-radius:var(--r-panel);background:var(--surface);box-shadow:var(--shadow)}.input-panel,.ai-panel,.card-panel{padding:24px}.input-panel,.ai-panel{min-height:390px}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}.panel-head>div:first-child{display:flex;gap:12px}.panel-head h2{margin:0 0 3px;color:var(--ink);font-size:18px;line-height:1.25}.panel-head p{margin:0;color:var(--muted);font-size:13px}.step-num{display:inline-flex;flex:none;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);font-size:13px;font-weight:800}.ai-step{background:var(--warning-soft);color:var(--warning)}.required,.ai-badge{padding:5px 8px;border-radius:6px;font-size:11px;font-weight:800;white-space:nowrap}.required{background:var(--warning-soft);color:var(--warning)}.ai-badge{background:var(--accent-soft);color:var(--accent-dark)}
+.field-label,.card-field>span{display:flex;align-items:center;gap:5px;margin-bottom:7px;color:var(--muted-strong);font-size:13px;font-weight:750}.field-group{flex:1;display:block}.form-row{display:flex;gap:12px;margin-top:15px}.input-panel textarea,.input-panel input,.input-panel select,.card-field input,.card-field textarea,.card-field select,.toolbar select,.search-wrap input{width:100%;border:1px solid var(--line-strong);border-radius:var(--r-control);outline:0;background:#fcfefd;color:var(--ink)}.input-panel textarea,.input-panel input,.input-panel select,.card-field input,.card-field textarea,.card-field select{min-height:44px;padding:10px 12px}.input-panel textarea,.card-field textarea{resize:vertical}.input-panel textarea{min-height:178px}.input-panel input,.input-panel select,.card-field input,.card-field select{height:44px}.input-panel textarea:focus,.input-panel input:focus,.input-panel select:focus,.card-field input:focus,.card-field textarea:focus,.card-field select:focus,.toolbar select:focus,.search-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(8,127,91,.13)}
+.primary-btn,.secondary-btn,.text-btn,.accept-btn,.reject-btn,.progress-btn{min-height:42px;border:0;border-radius:var(--r-control);padding:9px 15px;cursor:pointer;font-size:13px;font-weight:800;transition:background var(--ease),color var(--ease),border-color var(--ease),transform var(--ease)}.primary-btn{background:var(--accent);color:#fff;box-shadow:0 4px 10px rgba(8,127,91,.16)}.primary-btn:hover{background:var(--accent-dark)}.primary-btn:active,.secondary-btn:active{transform:translateY(1px)}.primary-btn:disabled{cursor:not-allowed;background:#b8c8c0;box-shadow:none}.secondary-btn{border:1px solid var(--line);background:var(--surface-soft);color:var(--muted-strong)}.secondary-btn:hover{border-color:var(--line-strong);background:#e8f0eb;color:var(--ink)}.text-btn{min-height:34px;padding:5px 0;background:transparent;color:var(--accent)}.text-btn:hover{color:var(--accent-dark);text-decoration:underline}.full{width:100%;margin-top:16px}
+.empty-state{padding:64px 16px;color:var(--muted);text-align:center}.empty-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin-bottom:12px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:20px}.empty-state p{margin:0;font-size:14px}.ai-result{display:grid;gap:12px}.ai-summary{display:flex;gap:10px;padding:12px;border:1px solid #f2dfbe;border-radius:8px;background:var(--warning-soft);color:#7c571e;font-size:13px}.question-list{display:grid;gap:10px}.question-item{padding:12px;border:1px solid var(--line);border-radius:9px;background:#fbfdfc}.question-item strong{display:block;margin-bottom:8px;color:var(--ink);font-size:13px;line-height:1.4}.question-item input{width:100%;min-height:38px;border:0;border-bottom:1px solid var(--line-strong);outline:0;background:transparent;color:var(--ink);font-size:14px}.question-item input:focus{border-color:var(--accent)}.prompt-details{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}.prompt-details summary{cursor:pointer;font-weight:750}.prompt-details pre{overflow:auto;margin:12px 0 0;padding:13px;border-radius:8px;background:var(--sidebar);color:#cbe7db;font-size:12px;line-height:1.55;white-space:pre-wrap}
+.card-panel{overflow:visible}.card-head{margin-bottom:14px}.score-bubble{display:flex;align-items:baseline;gap:4px;color:var(--muted)}.score-bubble strong{color:var(--accent);font-size:46px;line-height:.95;font-variant-numeric:tabular-nums}.score-bubble span{font-size:13px}.score-track{height:9px;overflow:hidden;border-radius:8px;background:#e8efeb}.score-track span{display:block;width:0;height:100%;border-radius:inherit;background:var(--accent);transition:width var(--ease)}.readiness-row{display:flex;align-items:center;gap:10px;margin:11px 0 18px;color:var(--muted);font-size:13px}.readiness{padding:5px 9px;border-radius:6px;font-weight:800;white-space:nowrap}.readiness.draft{background:var(--warning-soft);color:var(--warning)}.readiness.working{background:var(--info-soft);color:var(--info)}.readiness.ready,.readiness.priority{background:var(--accent-soft);color:var(--accent-dark)}.missing-banner{margin:10px 0 16px;padding:11px 13px;border:1px solid #f0d8ad;border-radius:8px;background:var(--warning-soft);color:#7c571e;font-size:13px}.card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card-field{display:block;min-width:0}.card-field.wide{grid-column:1/-1}.card-field>span{font-size:13px}.card-field i{color:var(--danger);font-style:normal}.card-field em{margin-left:auto;color:var(--muted);font-size:12px;font-style:normal;font-weight:700}.card-field input,.card-field textarea,.card-field select{background:#fff;font-size:14px}.card-field textarea{min-height:116px}.score-summary{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:9px;background:var(--surface-soft)}.score-breakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 20px;margin:0;padding:0;list-style:none}.score-breakdown li{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px}.score-breakdown strong{color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}.card-actions{display:flex;align-items:center;gap:14px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}.card-actions .primary-btn{margin-left:auto}.confirm-check{display:flex;align-items:center;gap:7px;color:var(--muted-strong);font-size:13px}.confirm-check input{width:17px;height:17px;accent-color:var(--accent)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px}.search-wrap{display:flex;flex:1 1 240px;align-items:center;gap:9px;min-height:44px;padding:0 12px;border:1px solid var(--line-strong);border-radius:var(--r-control);background:#fff;color:var(--muted)}.search-wrap input{min-height:40px;padding:7px 0;border:0;background:transparent}.toolbar select{min-height:44px;width:auto;min-width:205px;padding:9px 12px;background:#fff;color:var(--muted-strong)}.catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.task-card{display:flex;min-height:290px;flex-direction:column;padding:18px;border:1px solid var(--line);border-radius:var(--r-panel);background:#fff;box-shadow:var(--shadow)}.task-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.task-card h3{margin:0;color:var(--ink);font-size:17px;line-height:1.3}.industry-tag{margin:7px 0 13px;color:var(--muted);font-size:13px}.score-mini{padding:6px 8px;border-radius:7px;background:var(--accent-soft);color:var(--accent-dark);font-size:13px;font-weight:850;white-space:nowrap}.task-card p{margin:0 0 13px;color:var(--muted);font-size:14px}.card-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto}.meta-tag{padding:5px 8px;border-radius:6px;background:var(--surface-soft);color:var(--muted-strong);font-size:12px}.meta-tag.draft{background:var(--warning-soft);color:var(--warning)}.meta-tag.working{background:var(--info-soft);color:var(--info)}.meta-tag.ready,.meta-tag.priority{background:var(--accent-soft);color:var(--accent-dark)}.task-card-actions{display:flex;gap:8px;margin-top:16px}.task-card-actions .primary-btn,.task-card-actions .secondary-btn{flex:1;min-width:0;padding-right:8px;padding-left:8px}
+.offers-list,.dependent-grid{display:grid;gap:16px}.offer-task,.dependent-card{padding:20px;border:1px solid var(--line);border-radius:var(--r-panel);background:#fff;box-shadow:var(--shadow)}.offer-task-head,.dependent-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:15px;border-bottom:1px solid var(--line)}.offer-task h3,.dependent-card h3{margin:5px 0 0;color:var(--ink);font-size:18px}.offer-head-actions{display:flex;align-items:center;gap:8px}.compare-btn{min-height:36px;padding:7px 10px;font-size:12px}.offer-item{display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:18px;align-items:start;margin-top:12px;padding:15px;border:1px solid var(--line);border-radius:9px}.offer-item h4{margin:0;color:var(--ink);font-size:15px}.offer-item p{margin:5px 0 0;color:var(--muted);font-size:14px;white-space:pre-line}.offer-label{color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}.offer-actions{display:flex;gap:7px}.accept-btn{background:var(--accent-soft);color:var(--accent-dark)}.reject-btn{background:var(--danger-soft);color:var(--danger)}.progress-btn{background:var(--info-soft);color:var(--info)}.decision{display:inline-flex;align-items:center;min-height:31px;padding:5px 9px;border-radius:6px;font-size:12px;font-weight:800}.decision.accepted{background:var(--accent-soft);color:var(--accent-dark)}.decision.rejected{background:var(--danger-soft);color:var(--danger)}.progress-history{display:grid;gap:3px;margin-top:10px;padding:9px 10px;border-left:3px solid var(--accent);background:var(--surface-soft);color:var(--muted);font-size:13px}.progress-history strong{color:var(--ink)}.offer-ai-review{display:grid;gap:3px;margin-top:14px;padding:11px 12px;border-radius:8px;font-size:13px}.offer-ai-review.complete{background:var(--accent-soft);color:var(--accent-dark)}.offer-ai-review.incomplete{background:var(--warning-soft);color:var(--warning)}.offer-comparison{margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:9px;background:var(--surface-soft)}.comparison-title,.recommendations-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:var(--ink);font-size:13px}.comparison-title span,.recommendations-head span{color:var(--muted);font-size:12px}.comparison-row,.recommendation-item{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:9px;align-items:start;padding:9px 0;border-top:1px solid var(--line)}.comparison-row:first-of-type,.recommendation-item:first-of-type{border-top:0}.recommendation-rank{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);font-size:11px;font-weight:800}.recommendation-item strong,.comparison-row strong{color:var(--ink);font-size:13px}.recommendation-item p,.comparison-row p{margin:3px 0 0;color:var(--muted);font-size:12px}.recommendations-panel{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-soft)}
+.data-tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:18px;border-bottom:1px solid var(--line)}.data-tab{min-height:42px;padding:8px 13px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap}.data-tab:hover{color:var(--accent)}.data-tab.active{border-color:var(--accent);color:var(--accent)}.data-view{display:none}.data-view.active{display:block}.data-table{width:100%;border:1px solid var(--line);border-radius:var(--r-panel);border-spacing:0;background:#fff;overflow:hidden;font-size:14px}.data-table th,.data-table td{padding:13px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.data-table th{background:var(--surface-soft);color:var(--muted-strong);font-size:12px;letter-spacing:.5px;text-transform:uppercase}.data-table tr:last-child td{border-bottom:0}.data-table td strong{color:var(--ink)}
+.agent-banner{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding:15px 17px;border:1px solid #efddbc;border-radius:var(--r-panel);background:var(--warning-soft);color:var(--warning)}.agent-banner-icon{display:flex;flex:none;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#ffe9bd;font-size:18px}.agent-banner strong{color:#7c571e;font-size:14px}.agent-banner p{margin:3px 0 0;color:#8b6d3d;font-size:13px}.agent-banner .ai-badge{margin-left:auto}.dependent-status,.role-pill{display:inline-block;padding:5px 8px;border-radius:6px;font-size:12px;font-weight:800}.dependent-status{background:var(--warning-soft);color:var(--warning)}.role-pill{background:var(--accent-soft);color:var(--accent-dark);white-space:nowrap}.dependent-card-head p{margin:4px 0 0;color:var(--muted);font-size:13px}.dependent-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:15px}.dependent-card-grid>div{padding:12px;border-radius:8px;background:var(--surface-soft)}.dependent-card-grid span{display:block;margin-bottom:5px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}.dependent-card-grid p{margin:0;color:var(--muted-strong);font-size:14px;white-space:pre-line}.dependent-card-grid p strong{display:block;margin-top:7px;color:var(--warning)}
+.demo-timeline{display:flex;align-items:flex-start;gap:12px;padding:24px;border:1px solid var(--line);border-radius:var(--r-panel);background:#fff}.demo-step{display:flex;flex:1;gap:10px}.demo-step>span{display:flex;flex:none;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;background:var(--surface-soft);color:var(--muted);font-size:12px;font-weight:850}.demo-step.done>span{background:var(--accent-soft);color:var(--accent-dark)}.demo-step strong{display:block;color:var(--ink);font-size:13px}.demo-step p{margin:4px 0 0;color:var(--muted);font-size:12px}.demo-line{width:28px;height:1px;margin-top:13px;background:var(--line-strong)}.demo-note{display:flex;gap:12px;margin-top:18px;padding:14px;border:1px solid #cfe2ee;border-radius:9px;background:var(--info-soft);color:var(--info)}.note-icon{font-size:18px}.demo-note strong{font-size:13px}.demo-note p{margin:3px 0 0;font-size:13px}.architecture-card{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:18px;padding:23px;border-radius:var(--r-panel);background:var(--sidebar);color:#fff}.architecture-card .eyebrow{color:#65d7ad}.architecture-card h2{margin:0 0 6px;font-size:19px}.architecture-card p{max-width:540px;margin:0;color:#b7d0c5;font-size:13px}.arch-flow{display:flex;align-items:center;gap:9px;color:#cce4d9;font-size:12px;white-space:nowrap}.arch-flow span{padding:7px 8px;border:1px solid #3b6252;border-radius:6px;background:#1e3c31}.arch-flow b{color:#65d7ad}
+.modal{position:fixed;z-index:10;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(20,43,35,.48)}.modal-card{position:relative;width:min(540px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:25px;border-radius:var(--r-panel);background:#fff;box-shadow:0 20px 60px rgba(20,43,35,.25)}.modal-card h2{margin:0 0 6px;color:var(--ink);font-size:22px;line-height:1.2}.modal-card .card-field{margin-top:15px}.modal-close{position:absolute;top:10px;right:13px;width:36px;height:36px;border:0;border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;font-size:25px;line-height:1}.modal-close:hover{background:var(--surface-soft);color:var(--ink)}.muted{color:var(--muted);font-size:13px}.dependent-modal-card{width:min(760px,100%)}.agent-modal-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}.agent-modal-heading .ai-badge{margin-left:auto}.parent-context{position:relative;margin-bottom:14px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-soft)}.parent-label{display:block;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.8px}.parent-context strong{display:block;margin:3px 0;color:var(--ink);font-size:15px}.parent-context p{max-width:85%;overflow:hidden;margin:0;color:var(--muted);font-size:13px;text-overflow:ellipsis;white-space:nowrap}.parent-score{position:absolute;top:12px;right:12px;color:var(--accent);font-size:12px;font-weight:800}.agent-controls,.dependent-form-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}.dependent-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}.dependent-form-grid .wide{grid-column:1/-1}.agent-empty{padding:22px 10px;color:var(--muted);text-align:center}.agent-empty p{margin:0;font-size:13px}.agent-result-note{margin-top:15px;padding:10px 12px;border:1px solid #cbe8dc;border-radius:7px;background:var(--accent-soft);color:var(--accent-dark);font-size:13px}.agent-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.agent-modal-actions .secondary-btn{margin-right:auto}.toast{position:fixed;z-index:20;right:24px;bottom:24px;max-width:min(420px,calc(100vw - 32px));padding:12px 16px;border-radius:8px;background:var(--danger);color:#fff;box-shadow:var(--shadow);font-size:13px}.toast.success{background:var(--accent-dark)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid rgba(8,127,91,.28);outline-offset:2px}@media(max-width:1100px){.main-content{padding-right:24px;padding-left:24px}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-timeline{flex-wrap:wrap}.demo-line{display:none}}@media(max-width:850px){.sidebar{width:196px;flex-basis:196px}.builder-layout{grid-template-columns:1fr}.input-panel,.ai-panel{min-height:auto}.offer-item{grid-template-columns:1fr}.offer-actions{justify-content:flex-start}}@media(max-width:700px){.topbar{padding:0 16px}.topbar-status{display:none}.workspace{display:block}.sidebar{width:100%;padding:10px;border-bottom:1px solid rgba(255,255,255,.1)}.role-switcher{margin-bottom:9px}.nav-list{display:flex;overflow-x:auto;gap:4px}.nav-btn{min-width:max-content;min-height:38px;padding:7px 9px;font-size:13px}.nav-btn b{display:none}.sidebar-bottom{display:none}.main-content{padding:24px 14px 48px}.page-heading{display:block}.heading-chip,.catalog-total{display:inline-block;margin-top:14px}.form-row{display:grid}.card-grid,.score-breakdown,.dependent-card-grid,.agent-controls,.dependent-form-grid{grid-template-columns:1fr}.card-field.wide,.dependent-form-grid .wide{grid-column:auto}.card-actions{flex-wrap:wrap}.card-actions .primary-btn{margin-left:0}.toolbar{display:grid}.toolbar select{width:100%}.task-card-actions{display:grid}.offer-task-head,.dependent-card-head{display:block}.offer-head-actions{justify-content:flex-start;margin-top:12px}.role-pill{margin-top:10px}.agent-banner{align-items:flex-start}.agent-banner .ai-badge{margin-left:0}.parent-score{position:static;display:block;margin-top:6px}.parent-context p{max-width:100%}.architecture-card{display:block}.arch-flow{flex-wrap:wrap;margin-top:18px;white-space:normal}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style>
   </head>
   <body>
     <div class="app-shell">
@@ -1582,8 +64,8 @@
           </nav>
           <div class="sidebar-bottom">
             <div class="mini-kpi">
-              <span>Всего баллов</span><strong>100</strong
-              ><small>прозрачная формула</small>
+              <span>Рейтинг задачи</span><strong>0–100</strong
+              ><small>по заполненным критериям</small>
             </div>
             <div class="guardrail">
               <span>AI guardrail</span
@@ -1649,10 +131,7 @@
                 <div class="form-row">
                   <label class="field-group"
                     ><span class="field-label">Контакт</span
-                    ><input
-                      id="draft-contact"
-                      placeholder="Имя / email"
-                      value="Алия · business@example.com"
+                    ><input id="draft-contact" placeholder="Имя / email"
                   /></label>
                 </div>
                 <button class="primary-btn full" id="analyze-btn">
@@ -1685,10 +164,6 @@
                   </p>
                 </div>
                 <div id="ai-result" class="hidden"></div>
-                <label class="confirm-check ai-demo-toggle"
-                  ><input type="checkbox" id="simulate-ai-error" /> Демо:
-                  принудительно проверить fallback</label
-                >
                 <details class="prompt-details">
                   <summary>Показать prompt и формат обмена</summary>
                   <pre id="prompt-preview">
@@ -1698,6 +173,10 @@ OUTPUT: { missingFields[], questions[], suggestions[] }
 ERROR: при недоступности API или некорректном JSON использовать локальный fallback.</pre
                   >
                 </details>
+                <label class="confirm-check ai-demo-toggle"
+                  ><input type="checkbox" id="simulate-ai-error" /> Демо:
+                  принудительно проверить fallback</label
+                >
               </div>
             </div>
 
@@ -1723,7 +202,11 @@ ERROR: при недоступности API или некорректном JSO
                   >Заполните карточку, чтобы увидеть расчёт.</span
                 >
               </div>
-              <div id="score-breakdown" aria-live="polite"></div>
+              <div
+                id="score-breakdown"
+                class="score-summary"
+                aria-live="polite"
+              ></div>
               <div class="card-grid">
                 <label class="card-field wide"
                   ><span>Компания заказчика</span
@@ -1732,11 +215,6 @@ ERROR: при недоступности API или некорректном JSO
                     placeholder="Название компании"
                 /></label>
                 <label class="card-field wide"
-                  ><span>Контакт <i>*</i></span
-                  ><input
-                    data-field="contact"
-                    placeholder="Имя / email" /></label
-                ><label class="card-field wide"
                   ><span>Название задачи <i>*</i></span
                   ><input data-field="title" placeholder="Короткое название"
                 /></label>
@@ -1832,7 +310,16 @@ ERROR: при недоступности API или некорректном JSO
                   placeholder="Поиск по задачам, отрасли, пользователям..."
                 />
               </div>
-              <select id="catalog-level">
+              <select id="catalog-industry" aria-label="Отрасль задачи">
+                <option value="all">Все отрасли</option>
+                <option>Здравоохранение</option>
+                <option>Образование</option>
+                <option>Ритейл</option>
+                <option>Финансы</option>
+                <option>Логистика</option>
+                <option>Другое</option>
+              </select>
+              <select id="catalog-level" aria-label="Уровень готовности">
                 <option value="all">Все уровни готовности</option>
                 <option value="draft">Черновик · 0–39</option>
                 <option value="working">Рабочая · 40–69</option>
@@ -1871,7 +358,7 @@ ERROR: при недоступности API или некорректном JSO
                   исполнителя и не публикует карточку автоматически.
                 </p>
               </div>
-              <span class="ai-badge">LOCAL AI</span>
+              <span class="ai-badge">LLM / fallback</span>
             </div>
             <div id="dependent-list" class="dependent-grid"></div>
           </section>
@@ -2042,7 +529,7 @@ ERROR: при недоступности API или некорректном JSO
     <div class="modal hidden" id="progress-modal">
       <div class="modal-card">
         <button class="modal-close" id="progress-modal-close">×</button>
-        <p class="eyebrow">AI PROGRESS LOG</p>
+        <p class="eyebrow">ПРОГРЕСС КОМАНДЫ</p>
         <h2>Зафиксировать фактический прогресс</h2>
         <p id="progress-modal-subtitle" class="muted"></p>
         <label class="card-field"
@@ -2068,7 +555,12 @@ ERROR: при недоступности API или некорректном JSO
             <option value="done">Этап завершён</option>
             <option value="blocked">Есть блокер</option>
           </select></label
-        ><button class="primary-btn full" id="save-progress-btn">
+        >
+        <label class="confirm-check"><input type="checkbox" id="progress-confirm" />
+          Бизнес проверил результат и подтверждает завершение этапа
+        </label>
+        <p class="muted">За подтверждённый этап — 20 баллов. За каждый из пяти этапов баллы начисляются один раз на команду и задачу.</p>
+        <button class="primary-btn full" id="save-progress-btn">
           Сохранить прогресс
         </button>
       </div>
@@ -2172,1362 +664,1390 @@ GUARDRAIL: не добавлять факты, не назначать испо�
     </div>
 
     <div class="toast hidden" id="toast"></div>
-    <script>
-      const STORAGE_KEY = "ai-sana-mvp-v1";
-      const WEIGHTS = {
-        contextNeed: 20,
-        data: 20,
-        expectedResult: 15,
-        successCriteria: 15,
-        constraints: 10,
-        users: 10,
-        businessLink: 10,
-      };
-      const FIELD_LABELS = {
-        contextNeed: "контексте и потребности",
-        data: "данных и материалах",
-        expectedResult: "ожидаемом результате",
-        successCriteria: "критериях успеха",
-        constraints: "ограничениях",
-        users: "пользователях",
-        businessLink: "контакте и формате взаимодействия",
-      };
+    <script>const STORAGE_KEY = "ai-sana-mvp-v1";
+const PROGRESS_STAGES = ["Исследование", "Прототип", "Разработка", "Тестирование", "Финальная передача"];
+const STAGE_POINTS = 20;
+const WEIGHTS = {
+  contextNeed: 20,
+  data: 20,
+  expectedResult: 15,
+  successCriteria: 15,
+  constraints: 10,
+  users: 10,
+  businessLink: 10,
+};
+const FIELD_LABELS = {
+  contextNeed: "контексте и потребности",
+  data: "данных и материалах",
+  expectedResult: "ожидаемом результате",
+  successCriteria: "критериях успеха",
+  constraints: "ограничениях",
+  users: "пользователях",
+  businessLink: "контакте и формате взаимодействия",
+};
 
-      const seed = {
-        drafts: [
-          {
-            id: "d1",
-            text: "Хотим сократить очереди в городской клинике и сделать запись удобнее для пациентов.",
-            industry: "Здравоохранение",
-          },
-          {
-            id: "d2",
-            text: "Нужно помочь первокурсникам не терять дедлайны по практическим работам.",
-            industry: "Образование",
-          },
-          {
-            id: "d3",
-            text: "Маленькому магазину нужен понятный способ видеть товары, которые заканчиваются.",
-            industry: "Ритейл",
-          },
-          {
-            id: "d4",
-            text: "Логистическая компания хочет быстрее находить причину задержки доставки.",
-            industry: "Логистика",
-          },
-          {
-            id: "d5",
-            text: "Финансовый консультант хочет объяснять клиентам сложные продукты простыми словами.",
-            industry: "Финансы",
-          },
-        ],
-        teams: [
-          {
-            id: "team1",
-            name: "Qadam",
-            interests: "EdTech, civic tech",
-            skills: "UX, React, аналитика",
-            tech: "React, Node.js",
-          },
-          {
-            id: "team2",
-            name: "Nomad Labs",
-            interests: "HealthTech, AI",
-            skills: "Python, ML, backend",
-            tech: "FastAPI, SQLite",
-          },
-          {
-            id: "team3",
-            name: "Steppe Studio",
-            interests: "Retail, design",
-            skills: "UX/UI, frontend",
-            tech: "Vue, Figma",
-          },
-          {
-            id: "team4",
-            name: "Orda Devs",
-            interests: "Logistics, data",
-            skills: "Go, data viz, API",
-            tech: "Go, PostgreSQL",
-          },
-          {
-            id: "team5",
-            name: "Baiterek",
-            interests: "FinTech, accessibility",
-            skills: "product, frontend, QA",
-            tech: "Next.js, Playwright",
-          },
-        ],
-        cards: [
-          {
-            id: "task1",
-            title: "Умная запись в клинику",
-            companyName: "MedLine Clinic",
-            industry: "Здравоохранение",
-            contextNeed:
-              "Пациенты тратят время в очереди и не всегда понимают доступные слоты. Клиника хочет сделать запись удобнее.",
-            users: "Пациенты и регистраторы клиники.",
-            data: "Расписание врачей, типовые причины визита, примеры талонов.",
-            expectedResult:
-              "Интерактивный прототип записи с подбором свободного времени.",
-            successCriteria:
-              "Пациент находит слот не более чем за 3 шага; регистратор видит подтверждённую запись.",
-            constraints:
-              "MVP за 5 часов; без интеграции с медицинской системой.",
-            format: "Контакт с Алией в Telegram дважды за время хакатона.",
-            contact: "Алия · business@example.com",
-            published: true,
-            offers: [],
-          },
-          {
-            id: "task2",
-            title: "Дедлайн без стресса",
-            companyName: "City University",
-            industry: "Образование",
-            contextNeed:
-              "Первокурсники теряют дедлайны практических работ и поздно узнают о накопившихся задачах.",
-            users: "Студенты первого курса и преподаватели.",
-            data: "Список заданий, даты сдачи, статусы выполнения.",
-            expectedResult: "Экран с приоритетами и понятным планом на неделю.",
-            successCriteria:
-              "Студент за 30 секунд понимает ближайший дедлайн и следующий шаг.",
-            constraints:
-              "Без регистрации и push-уведомлений; только прототип данных.",
-            format: "Онлайн-консультация с преподавателем раз в час.",
-            published: true,
-            offers: [],
-          },
-          {
-            id: "task3",
-            title: "Панель остатков магазина",
-            companyName: "SmallMart",
-            industry: "Ритейл",
-            contextNeed:
-              "Небольшому магазину сложно заранее заметить, что популярный товар заканчивается.",
-            users: "Владелец магазина и продавцы.",
-            data: "Остатки, продажи за неделю, минимальный порог.",
-            expectedResult:
-              "Дашборд с товарами риска и подсказкой по пополнению.",
-            successCriteria: "Владелец находит 3 товара риска за 1 минуту.",
-            constraints: "Синтетические данные; только desktop.",
-            format: "Обратная связь в чате хакатона.",
-            published: true,
-            offers: [],
-          },
-          {
-            id: "task4",
-            title: "Почему задержалась доставка?",
-            companyName: "QazLogistics",
-            industry: "Логистика",
-            contextNeed:
-              "Менеджер видит факт задержки, но тратит много времени на поиск участка маршрута, где возникла проблема.",
-            users: "Логисты и операторы поддержки.",
-            data: "Статусы отправлений, временные метки, точки маршрута.",
-            expectedResult:
-              "Визуальная цепочка доставки с выделением проблемного этапа.",
-            successCriteria:
-              "Причина задержки определяется по карточке за 2 минуты.",
-            constraints: "Без реального GPS; маршрут из 10 тестовых записей.",
-            format: "Два коротких созвона с бизнесом.",
-            published: true,
-            offers: [],
-          },
-          {
-            id: "task5",
-            title: "Простое объяснение финансового продукта",
-            companyName: "FinConsult",
-            industry: "Финансы",
-            contextNeed:
-              "Клиенты консультанта не понимают сложные условия финансовых продуктов и задают одни и те же вопросы.",
-            users: "Частные клиенты 25–45 лет.",
-            data: "Публичные описания продуктов и список частых вопросов.",
-            expectedResult: "Прототип сравнения продуктов простым языком.",
-            successCriteria:
-              "Пользователь может назвать отличие двух продуктов после просмотра.",
-            constraints:
-              "Не давать персональных финансовых рекомендаций; использовать только тестовые данные.",
-            format: "Письменная обратная связь и финальное интервью.",
-            published: true,
-            offers: [],
-          },
-        ],
-        proposals: [
-          {
-            id: "p1",
-            taskId: "task1",
-            teamId: "team2",
-            idea: "Сделаем мастер записи с фильтром по специалисту и времени.",
-            plan: "1) форма; 2) мок расписания; 3) экран подтверждения. 4 часа.",
-            link: "https://example.com/nomad-clinic",
-            status: "pending",
-          },
-          {
-            id: "p2",
-            taskId: "task2",
-            teamId: "team1",
-            idea: "Покажем недельный маршрут студента с приоритетом по сроку.",
-            plan: "Данные → логика приоритета → календарный экран. 4 часа.",
-            link: "https://example.com/qadam-deadline",
-            status: "pending",
-          },
-          {
-            id: "p3",
-            taskId: "task3",
-            teamId: "team3",
-            idea: "Соберём спокойный дашборд остатков с цветовой зоной риска.",
-            plan: "Синтетические данные → карточки → фильтр категорий. 3.5 часа.",
-            link: "https://example.com/steppe-stock",
-            status: "pending",
-          },
-          {
-            id: "p4",
-            taskId: "task4",
-            teamId: "team4",
-            idea: "Сделаем timeline маршрута и объясним, где накопилась задержка.",
-            plan: "Таблица событий → timeline → состояние риска. 4 часа.",
-            link: "https://example.com/orda-route",
-            status: "pending",
-          },
-          {
-            id: "p5",
-            taskId: "task5",
-            teamId: "team5",
-            idea: "Сравним продукты через вопросы пользователя, без советов.",
-            plan: "Категории → сравнение → проверка понятности. 4 часа.",
-            link: "https://example.com/baiterek-fin",
-            status: "pending",
-          },
-        ],
-      };
+const seed = {
+  drafts: [
+    {
+      id: "d1",
+      text: "Хотим сократить очереди в городской клинике и сделать запись удобнее для пациентов.",
+      industry: "Здравоохранение",
+    },
+    {
+      id: "d2",
+      text: "Нужно помочь первокурсникам не терять дедлайны по практическим работам.",
+      industry: "Образование",
+    },
+    {
+      id: "d3",
+      text: "Маленькому магазину нужен понятный способ видеть товары, которые заканчиваются.",
+      industry: "Ритейл",
+    },
+    {
+      id: "d4",
+      text: "Логистическая компания хочет быстрее находить причину задержки доставки.",
+      industry: "Логистика",
+    },
+    {
+      id: "d5",
+      text: "Финансовый консультант хочет объяснять клиентам сложные продукты простыми словами.",
+      industry: "Финансы",
+    },
+  ],
+  teams: [
+    {
+      id: "team1",
+      name: "Qadam",
+      interests: "EdTech, civic tech",
+      skills: "UX, React, аналитика",
+      tech: "React, Node.js",
+    },
+    {
+      id: "team2",
+      name: "Nomad Labs",
+      interests: "HealthTech, AI",
+      skills: "Python, ML, backend",
+      tech: "FastAPI, SQLite",
+    },
+    {
+      id: "team3",
+      name: "Steppe Studio",
+      interests: "Retail, design",
+      skills: "UX/UI, frontend",
+      tech: "Vue, Figma",
+    },
+    {
+      id: "team4",
+      name: "Orda Devs",
+      interests: "Logistics, data",
+      skills: "Go, data viz, API",
+      tech: "Go, PostgreSQL",
+    },
+    {
+      id: "team5",
+      name: "Baiterek",
+      interests: "FinTech, accessibility",
+      skills: "product, frontend, QA",
+      tech: "Next.js, Playwright",
+    },
+  ],
+  cards: [
+    {
+      id: "task1",
+      title: "Умная запись в клинику",
+      companyName: "MedLine Clinic",
+      industry: "Здравоохранение",
+      contextNeed:
+        "Пациенты тратят время в очереди и не всегда понимают доступные слоты. Клиника хочет сделать запись удобнее.",
+      users: "Пациенты и регистраторы клиники.",
+      data: "Расписание врачей, типовые причины визита, примеры талонов.",
+      expectedResult:
+        "Интерактивный прототип записи с подбором свободного времени.",
+      successCriteria:
+        "Пациент находит слот не более чем за 3 шага; регистратор видит подтверждённую запись.",
+      constraints: "MVP за 5 часов; без интеграции с медицинской системой.",
+      format: "Контакт с Алией в Telegram дважды за время хакатона.",
+      contact: "Алия · business@example.com",
+      published: true,
+      offers: [],
+    },
+    {
+      id: "task2",
+      title: "Дедлайн без стресса",
+      companyName: "City University",
+      industry: "Образование",
+      contextNeed:
+        "Первокурсники теряют дедлайны практических работ и поздно узнают о накопившихся задачах.",
+      users: "Студенты первого курса и преподаватели.",
+      data: "Список заданий, даты сдачи, статусы выполнения.",
+      expectedResult: "Экран с приоритетами и понятным планом на неделю.",
+      successCriteria:
+        "Студент за 30 секунд понимает ближайший дедлайн и следующий шаг.",
+      constraints:
+        "Без регистрации и push-уведомлений; только прототип данных.",
+      format: "Онлайн-консультация с преподавателем раз в час.",
+      published: true,
+      offers: [],
+    },
+    {
+      id: "task3",
+      title: "Панель остатков магазина",
+      companyName: "SmallMart",
+      industry: "Ритейл",
+      contextNeed:
+        "Небольшому магазину сложно заранее заметить, что популярный товар заканчивается.",
+      users: "Владелец магазина и продавцы.",
+      data: "Остатки, продажи за неделю, минимальный порог.",
+      expectedResult: "Дашборд с товарами риска и подсказкой по пополнению.",
+      successCriteria: "Владелец находит 3 товара риска за 1 минуту.",
+      constraints: "Синтетические данные; только desktop.",
+      format: "Обратная связь в чате хакатона.",
+      published: true,
+      offers: [],
+    },
+    {
+      id: "task4",
+      title: "Почему задержалась доставка?",
+      companyName: "QazLogistics",
+      industry: "Логистика",
+      contextNeed:
+        "Менеджер видит факт задержки, но тратит много времени на поиск участка маршрута, где возникла проблема.",
+      users: "Логисты и операторы поддержки.",
+      data: "Статусы отправлений, временные метки, точки маршрута.",
+      expectedResult:
+        "Визуальная цепочка доставки с выделением проблемного этапа.",
+      successCriteria: "Причина задержки определяется по карточке за 2 минуты.",
+      constraints: "Без реального GPS; маршрут из 10 тестовых записей.",
+      format: "Два коротких созвона с бизнесом.",
+      published: true,
+      offers: [],
+    },
+    {
+      id: "task5",
+      title: "Простое объяснение финансового продукта",
+      companyName: "FinConsult",
+      industry: "Финансы",
+      contextNeed:
+        "Клиенты консультанта не понимают сложные условия финансовых продуктов и задают одни и те же вопросы.",
+      users: "Частные клиенты 25–45 лет.",
+      data: "Публичные описания продуктов и список частых вопросов.",
+      expectedResult: "Прототип сравнения продуктов простым языком.",
+      successCriteria:
+        "Пользователь может назвать отличие двух продуктов после просмотра.",
+      constraints:
+        "Не давать персональных финансовых рекомендаций; использовать только тестовые данные.",
+      format: "Письменная обратная связь и финальное интервью.",
+      published: true,
+      offers: [],
+    },
+  ],
+  proposals: [
+    {
+      id: "p1",
+      taskId: "task1",
+      teamId: "team2",
+      idea: "Сделаем мастер записи с фильтром по специалисту и времени.",
+      plan: "1) форма; 2) мок расписания; 3) экран подтверждения. 4 часа.",
+      link: "https://example.com/nomad-clinic",
+      status: "pending",
+    },
+    {
+      id: "p2",
+      taskId: "task2",
+      teamId: "team1",
+      idea: "Покажем недельный маршрут студента с приоритетом по сроку.",
+      plan: "Данные → логика приоритета → календарный экран. 4 часа.",
+      link: "https://example.com/qadam-deadline",
+      status: "pending",
+    },
+    {
+      id: "p3",
+      taskId: "task3",
+      teamId: "team3",
+      idea: "Соберём спокойный дашборд остатков с цветовой зоной риска.",
+      plan: "Синтетические данные → карточки → фильтр категорий. 3.5 часа.",
+      link: "https://example.com/steppe-stock",
+      status: "pending",
+    },
+    {
+      id: "p4",
+      taskId: "task4",
+      teamId: "team4",
+      idea: "Сделаем timeline маршрута и объясним, где накопилась задержка.",
+      plan: "Таблица событий → timeline → состояние риска. 4 часа.",
+      link: "https://example.com/orda-route",
+      status: "pending",
+    },
+    {
+      id: "p5",
+      taskId: "task5",
+      teamId: "team5",
+      idea: "Сравним продукты через вопросы пользователя, без советов.",
+      plan: "Категории → сравнение → проверка понятности. 4 часа.",
+      link: "https://example.com/baiterek-fin",
+      status: "pending",
+    },
+  ],
+};
 
-      let state = loadState();
-      let currentRole = "business";
-      let currentView = "builder";
-      let activeTaskId = state.activeTaskId || null;
-      let offerTaskId = null;
-      let dependentParentTaskId = null;
-      let progressOfferRef = null;
+let state = loadState();
+let currentRole = "business";
+let currentView = "builder";
+let activeTaskId = state.activeTaskId || null;
+let offerTaskId = null;
+let dependentParentTaskId = null;
+let progressOfferRef = null;
+let dependentRequestId = 0;
+let dependentBusy = false;
+let dependentSource = null;
+let analysisRequestId = 0;
+let analysisBusy = false;
 
-      function clone(value) {
-        return JSON.parse(JSON.stringify(value));
-      }
-      function safeLink(value) {
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+function safeLink(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+function validateAnalysis(raw, missing, questions) {
+  try {
+    const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (
+      !value ||
+      !Array.isArray(value.missingFields) ||
+      !Array.isArray(value.questions) ||
+      !Array.isArray(value.suggestions) ||
+      value.suggestions.length ||
+      value.missingFields.length !== missing.length ||
+      !missing.every((key) => value.missingFields.includes(key)) ||
+      value.questions.length !== questions.length ||
+      new Set(value.questions.map((q) => q?.field)).size !== missing.length ||
+      !value.questions.every(
+        (q) =>
+          q &&
+          missing.includes(q.field) &&
+          typeof q.text === "string" &&
+          q.text.trim(),
+      )
+    )
+      throw new Error("Invalid analysis");
+    return { ...value, fallback: false };
+  } catch {
+    return {
+      missingFields: missing,
+      questions,
+      suggestions: [],
+      fallback: true,
+    };
+  }
+}
+function validateDependentOutput(raw) {
+  try {
+    const value = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const keys = [
+      "title",
+      "goal",
+      "input_data",
+      "expected_artifact",
+      "acceptance_criteria",
+      "constraints",
+    ];
+    if (
+      !value ||
+      typeof value !== "object" ||
+      Array.isArray(value) ||
+      Object.keys(value).some((key) => !keys.includes(key)) ||
+      keys.some((key) => typeof value[key] !== "string" || !value[key].trim())
+    )
+      throw new Error("Invalid dependent task");
+    return { ...value, fallback: false };
+  } catch {
+    return null;
+  }
+}
+function requestLLM(route, payload) {
+  if (typeof fetch !== "function") return null;
+  const pageOrigin =
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.protocol !== "file:"
+      ? window.location.origin
+      : "";
+  const urls = pageOrigin ? [`${pageOrigin}${route}`] : [];
+  if (!/^http:\/\/(localhost|127\.0\.0\.1):8000$/.test(pageOrigin)) {
+    urls.push(`http://localhost:8000${route}`);
+  }
+  return (async () => {
+    for (let index = 0; index < urls.length; index++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 100000);
+      try {
+        let response;
         try {
-          const url = new URL(value);
-          return ["http:", "https:"].includes(url.protocol) ? url.href : "";
-        } catch {
-          return "";
-        }
-      }
-      function validateAnalysis(raw, missing, questions) {
-        try {
-          const value = typeof raw === "string" ? JSON.parse(raw) : raw;
-          if (
-            !value ||
-            !Array.isArray(value.missingFields) ||
-            !Array.isArray(value.questions) ||
-            !Array.isArray(value.suggestions) ||
-            value.suggestions.length ||
-            value.missingFields.length !== missing.length ||
-            !missing.every((key) => value.missingFields.includes(key)) ||
-            value.questions.length !== questions.length ||
-            !value.questions.every(
-              (q) =>
-                q &&
-                missing.includes(q.field) &&
-                typeof q.text === "string" &&
-                q.text.trim(),
-            )
-          )
-            throw new Error("Invalid analysis");
-          return { ...value, fallback: false };
-        } catch {
-          return {
-            missingFields: missing,
-            questions,
-            suggestions: [],
-            fallback: true,
-          };
-        }
-      }
-      function validateDependentOutput(raw) {
-        try {
-          const value = typeof raw === "string" ? JSON.parse(raw) : raw;
-          const keys = [
-            "title",
-            "goal",
-            "input_data",
-            "expected_artifact",
-            "acceptance_criteria",
-            "constraints",
-          ];
-          if (
-            !value ||
-            typeof value !== "object" ||
-            Array.isArray(value) ||
-            Object.keys(value).some((key) => !keys.includes(key)) ||
-            keys.some(
-              (key) => typeof value[key] !== "string" || !value[key].trim(),
-            )
-          )
-            throw new Error("Invalid dependent task");
-          return { ...value, fallback: false };
-        } catch {
-          return null;
-        }
-      }
-      function requestLLM(route, payload) {
-        if (typeof fetch !== "function") return null;
-        const pageOrigin =
-          typeof window !== "undefined" &&
-          window.location &&
-          window.location.protocol !== "file:"
-            ? window.location.origin
-            : "";
-        const urls = [
-          `${pageOrigin}${route}`,
-          `http://localhost:8000${route}`,
-        ].filter((url, index, all) => url && all.indexOf(url) === index);
-        const attempt = (index) =>
-          fetch(urls[index], {
+          response = await fetch(urls[index], {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
-          })
-            .then((response) =>
-              response
-                .json()
-                .catch(() => ({ error: `HTTP ${response.status}` }))
-                .then((value) => {
-                  if (response.ok) return value;
-                  if (index + 1 < urls.length) return attempt(index + 1);
-                  throw new Error(value.error || "LLM API error");
-                }),
-            )
-            .catch((error) => {
-              if (index + 1 < urls.length) return attempt(index + 1);
-              throw error;
-            });
-        return attempt(0);
-      }
-      function loadState() {
-        try {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (
-              !Array.isArray(parsed.tasks) ||
-              !Array.isArray(parsed.teams) ||
-              !Array.isArray(parsed.drafts)
-            )
-              throw new Error("Invalid storage");
-            parsed.tasks.forEach((task) => {
-              if (
-                !task ||
-                typeof task.id !== "string" ||
-                !Array.isArray(task.offers)
-              )
-                throw new Error("Invalid task");
-              Object.assign(task, calculateScore(task));
-            });
-            return {
-              ...parsed,
-              dependentTasks: Array.isArray(parsed.dependentTasks)
-                ? parsed.dependentTasks
-                : [],
-            };
-          }
-        } catch (e) {}
-        const tasks = clone(seed.cards).map((task) =>
-          Object.assign(task, calculateScore(task)),
-        );
-        clone(seed.proposals).forEach((proposal) => {
-          const task = tasks.find((t) => t.id === proposal.taskId);
-          if (task) task.offers.push(proposal);
-        });
-        return {
-          ...clone(seed),
-          tasks,
-          proposals: clone(seed.proposals),
-          dependentTasks: [],
-        };
-      }
-      function persist() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-          updateCounts();
-          return true;
-        } catch (e) {
-          toast(
-            "Не удалось сохранить данные в браузере. Изменения доступны только до закрытия страницы.",
-            false,
-          );
-          return false;
+            signal: controller.signal,
+          });
+        } catch (error) {
+          if (error.name !== "AbortError" && index + 1 < urls.length) continue;
+          throw error;
         }
+        // Live Server has no API. Retry only at the proxy, never repeat a model error.
+        if ([404, 405].includes(response.status) && index + 1 < urls.length) continue;
+        const value = await response.json();
+        if (!response.ok) throw new Error(value.error || "LLM API error");
+        return value;
+      } finally {
+        clearTimeout(timeout);
       }
-      function esc(value = "") {
-        return String(value).replace(
-          /[&<>"']/g,
-          (c) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[c],
-        );
-      }
-      function toast(message, success = true) {
-        const el = document.getElementById("toast");
-        el.textContent = message;
-        el.className = "toast " + (success ? "success" : "");
-        setTimeout(() => el.classList.add("hidden"), 2600);
-      }
-      function getTask() {
-        return state.tasks.find((t) => t.id === activeTaskId);
-      }
-      function readiness(score) {
-        if (score >= 90) return ["priority", "Приоритетная"];
-        if (score >= 70) return ["ready", "Готовая"];
-        if (score >= 40) return ["working", "Рабочая"];
-        return ["draft", "Черновик"];
-      }
-      function calculateScore(task) {
-        const values = {
-          contextNeed: task.contextNeed,
-          data: task.data,
-          expectedResult: task.expectedResult,
-          successCriteria: task.successCriteria,
-          constraints: task.constraints,
-          users: task.users,
-          businessLink: task.contact && task.format ? "yes" : "",
-        };
-        const breakdown = {};
-        let score = 0;
-        Object.keys(WEIGHTS).forEach((key) => {
-          const ok =
-            key === "businessLink"
-              ? [task.contact, task.format].every(
-                  (value) =>
-                    typeof value === "string" && value.trim().length >= 8,
-                )
-              : String(values[key] || "").trim().length >= 8;
-          breakdown[key] = ok ? WEIGHTS[key] : 0;
-          score += breakdown[key];
-        });
-        return {
-          score,
-          breakdown,
-          missing: Object.keys(WEIGHTS).filter((k) => !breakdown[k]),
-        };
-      }
-      function setCardFields(task) {
-        document
-          .querySelectorAll("[data-field]")
-          .forEach((el) => (el.value = task[el.dataset.field] || ""));
-        document.getElementById("draft-company").value =
-          task.companyName || document.getElementById("draft-company").value;
-        document.getElementById("draft-contact").value =
-          task.contact || document.getElementById("draft-contact").value;
-        document.getElementById("draft-industry").value =
-          task.industry || "Другое";
-        renderScore(task);
-      }
-      function readCardFields() {
-        const task = getTask()
-          ? clone(getTask())
-          : {
-              id:
-                "draft-" +
-                Date.now() +
-                "-" +
-                Math.random().toString(36).slice(2),
-              offers: [],
-            };
-        document
-          .querySelectorAll("[data-field]")
-          .forEach((el) => (task[el.dataset.field] = el.value.trim()));
-        task.industry = document.getElementById("draft-industry").value;
-        const calc = calculateScore(task);
-        Object.assign(task, calc);
-        return task;
-      }
-      function storeCard(task) {
-        const index = state.tasks.findIndex((item) => item.id === task.id);
-        if (index < 0) state.tasks.unshift(task);
-        else state.tasks[index] = task;
-        activeTaskId = task.id;
-        state.activeTaskId = task.id;
-        return persist();
-      }
-      function saveDraft() {
-        const task = readCardFields();
-        if (storeCard(task)) toast("Карточка сохранена");
-      }
-      function scoreDetails(task) {
-        const calc = calculateScore(task);
-        return (
-          '<ul class="score-breakdown">' +
-          Object.keys(WEIGHTS)
-            .map(
-              (key) =>
-                `<li>${FIELD_LABELS[key]}: <strong>${calc.breakdown[key]} / ${WEIGHTS[key]}</strong></li>`,
-            )
-            .join("") +
-          "</ul>"
-        );
-      }
-      function renderScore(task) {
-        const calc = calculateScore(task);
-        Object.assign(task, calc);
-        document.getElementById("score-value").textContent = calc.score;
-        document.getElementById("score-track-fill").style.width =
-          calc.score + "%";
-        document.getElementById("score-breakdown").innerHTML =
-          scoreDetails(task);
-        const [level, label] = readiness(calc.score);
-        const badge = document.getElementById("readiness-label");
-        badge.className = "readiness " + level;
-        badge.textContent = label;
-        const explanation =
-          calc.score === 100
-            ? "Карточка полностью готова к работе."
-            : `${calc.score}/100 · ${calc.missing.length} ${calc.missing.length === 1 ? "поле требует" : "полей требуют"} дополнения.`;
-        document.getElementById("score-explain").textContent = explanation;
-        const banner = document.getElementById("missing-banner");
-        if (calc.missing.length) {
-          banner.classList.remove("hidden");
-          banner.innerHTML =
-            "<strong>Как повысить рейтинг:</strong> " +
-            calc.missing.map((k) => FIELD_LABELS[k]).join(", ") +
-            ". Баллы начисляются за заполнение; публикацию подтверждает человек.";
-        } else banner.classList.add("hidden");
-        document.getElementById("publish-btn").disabled =
-          !document.getElementById("confirm-check").checked ||
-          !task.title?.trim() ||
-          !task.contact?.trim();
-      }
-      function renderAnalysis(task, calc, rawAnalysis, source) {
-        const localQuestions = calc.missing.map((k) => ({
-          field: k,
-          text: {
-            contextNeed:
-              "Что сейчас происходит и какое изменение нужно получить?",
-            data: "Какие данные, примеры или источники можно дать команде?",
-            expectedResult:
-              "Какой конкретный результат должна показать команда?",
-            successCriteria: "По каким измеримым признакам вы примете решение?",
-            constraints:
-              "Какие есть сроки, технологии, доступы или ограничения?",
-            users: "Для кого в первую очередь создаётся решение?",
-            businessLink:
-              "Кто будет контактным лицом и как команда получит обратную связь?",
-          }[k],
-        }));
-        const analysis = validateAnalysis(
-          rawAnalysis,
-          calc.missing,
-          localQuestions,
-        );
-        const questions = analysis.questions;
-        const ai = document.getElementById("ai-result");
-        document.getElementById("ai-empty").classList.add("hidden");
-        ai.classList.remove("hidden");
-        ai.innerHTML = `<div class="ai-summary"><span>✦</span><span><strong>${analysis.fallback ? (source === "api" ? "Ответ API не прошёл проверку: включён локальный fallback." : "Некорректный AI-ответ: включён локальный fallback.") : source === "api" ? "Вопросы подготовлены LLM API." : "Локальный анализ завершён."}</strong> Факты не добавлялись. Найдено пробелов: ${calc.missing.length}. Ответы ниже попадут только в редактируемую карточку.</span></div><div class="question-list">${questions.length ? questions.map((q, i) => `<div class="question-item"><strong>${i + 1}. ${esc(q.text)}</strong><input data-question-field="${esc(q.field)}" placeholder="Ваш ответ (необязательно сейчас)" /></div>`).join("") : '<div class="ai-summary">Карточка заполнена. Проверьте данные и подтвердите публикацию.</div>'}</div>`;
-        ai.querySelectorAll("[data-question-field]").forEach((input) =>
-          input.addEventListener("change", () => {
-            const field = input.dataset.questionField;
-            const value = input.value.trim();
-            if (value) {
-              task = readCardFields();
-              task[field === "businessLink" ? "format" : field] =
-                field === "contextNeed" && task[field]
-                  ? task[field] + " " + value
-                  : value;
-              setCardFields(task);
-            }
-          }),
-        );
+    }
+  })();
+}
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (
+        !Array.isArray(parsed.tasks) ||
+        !Array.isArray(parsed.teams) ||
+        !Array.isArray(parsed.drafts)
+      )
+        throw new Error("Invalid storage");
+      parsed.tasks.forEach((task) => {
+        if (!task || typeof task.id !== "string" || !Array.isArray(task.offers))
+          throw new Error("Invalid task");
+        Object.assign(task, calculateScore(task));
+      });
+      return {
+        ...parsed,
+        dependentTasks: Array.isArray(parsed.dependentTasks)
+          ? parsed.dependentTasks
+          : [],
+      };
+    }
+  } catch (e) {}
+  const tasks = clone(seed.cards).map((task) =>
+    Object.assign(task, calculateScore(task)),
+  );
+  clone(seed.proposals).forEach((proposal) => {
+    const task = tasks.find((t) => t.id === proposal.taskId);
+    if (task) task.offers.push(proposal);
+  });
+  return {
+    ...clone(seed),
+    tasks,
+    proposals: clone(seed.proposals),
+    dependentTasks: [],
+  };
+}
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    updateCounts();
+    return true;
+  } catch (e) {
+    toast(
+      "Не удалось сохранить данные в браузере. Изменения доступны только до закрытия страницы.",
+      false,
+    );
+    return false;
+  }
+}
+function esc(value = "") {
+  return String(value).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+}
+function toast(message, success = true) {
+  const el = document.getElementById("toast");
+  el.textContent = message;
+  el.className = "toast " + (success ? "success" : "");
+  setTimeout(() => el.classList.add("hidden"), 2600);
+}
+function getTask() {
+  return state.tasks.find((t) => t.id === activeTaskId);
+}
+function readiness(score) {
+  if (score >= 90) return ["priority", "Приоритетная"];
+  if (score >= 70) return ["ready", "Готовая"];
+  if (score >= 40) return ["working", "Рабочая"];
+  return ["draft", "Черновик"];
+}
+function calculateScore(task) {
+  const values = {
+    contextNeed: task.contextNeed,
+    data: task.data,
+    expectedResult: task.expectedResult,
+    successCriteria: task.successCriteria,
+    constraints: task.constraints,
+    users: task.users,
+    businessLink: task.contact && task.format ? "yes" : "",
+  };
+  const breakdown = {};
+  let score = 0;
+  Object.keys(WEIGHTS).forEach((key) => {
+    const ok =
+      key === "businessLink"
+        ? [task.contact, task.format].every(
+            (value) => typeof value === "string" && value.trim().length >= 8,
+          )
+        : String(values[key] || "").trim().length >= 8;
+    breakdown[key] = ok ? WEIGHTS[key] : 0;
+    score += breakdown[key];
+  });
+  return {
+    score,
+    breakdown,
+    missing: Object.keys(WEIGHTS).filter((k) => !breakdown[k]),
+  };
+}
+function setCardFields(task) {
+  document
+    .querySelectorAll("[data-field]")
+    .forEach((el) => (el.value = task[el.dataset.field] || ""));
+  document.getElementById("draft-company").value =
+    task.companyName || document.getElementById("draft-company").value;
+  document.getElementById("draft-contact").value =
+    task.contact || "";
+  document.getElementById("draft-industry").value = task.industry || "Другое";
+  renderScore(task);
+}
+function readCardFields() {
+  const task = getTask()
+    ? clone(getTask())
+    : {
+        id: "draft-" + Date.now() + "-" + Math.random().toString(36).slice(2),
+        offers: [],
+      };
+  document
+    .querySelectorAll("[data-field]")
+    .forEach((el) => (task[el.dataset.field] = el.value.trim()));
+  task.contact = document.getElementById("draft-contact").value.trim();
+  task.industry = document.getElementById("draft-industry").value;
+  const calc = calculateScore(task);
+  Object.assign(task, calc);
+  return task;
+}
+function storeCard(task) {
+  const index = state.tasks.findIndex((item) => item.id === task.id);
+  if (index < 0) state.tasks.unshift(task);
+  else state.tasks[index] = task;
+  activeTaskId = task.id;
+  state.activeTaskId = task.id;
+  return persist();
+}
+function saveDraft() {
+  const task = readCardFields();
+  if (storeCard(task)) toast("Карточка сохранена");
+}
+function scoreDetails(task) {
+  const calc = calculateScore(task);
+  return (
+    '<ul class="score-breakdown">' +
+    Object.keys(WEIGHTS)
+      .map(
+        (key) =>
+          `<li>${FIELD_LABELS[key]}: <strong>${calc.breakdown[key]} / ${WEIGHTS[key]}</strong></li>`,
+      )
+      .join("") +
+    "</ul>"
+  );
+}
+function renderScore(task) {
+  const calc = calculateScore(task);
+  Object.assign(task, calc);
+  document.getElementById("score-value").textContent = calc.score;
+  document.getElementById("score-track-fill").style.width = calc.score + "%";
+  document.getElementById("score-breakdown").innerHTML = scoreDetails(task);
+  const [level, label] = readiness(calc.score);
+  const badge = document.getElementById("readiness-label");
+  badge.className = "readiness " + level;
+  badge.textContent = label;
+  const explanation =
+    calc.score === 100
+      ? "Карточка полностью готова к работе."
+      : `${calc.score}/100 · ${calc.missing.length} ${calc.missing.length === 1 ? "поле требует" : "полей требуют"} дополнения.`;
+  document.getElementById("score-explain").textContent = explanation;
+  const banner = document.getElementById("missing-banner");
+  if (calc.missing.length) {
+    banner.classList.remove("hidden");
+    banner.innerHTML =
+      "<strong>Как повысить рейтинг:</strong> " +
+      calc.missing.map((k) => FIELD_LABELS[k]).join(", ") +
+      ". Баллы начисляются за заполнение; публикацию подтверждает человек.";
+  } else banner.classList.add("hidden");
+  document.getElementById("publish-btn").disabled =
+    !document.getElementById("confirm-check").checked ||
+    !task.title?.trim() ||
+    !task.contact?.trim();
+}
+function renderAnalysis(task, calc, rawAnalysis, source) {
+  const localQuestions = calc.missing.map((k) => ({
+    field: k,
+    text: {
+      contextNeed: "Что сейчас происходит и какое изменение нужно получить?",
+      data: "Какие данные, примеры или источники можно дать команде?",
+      expectedResult: "Какой конкретный результат должна показать команда?",
+      successCriteria: "По каким измеримым признакам вы примете решение?",
+      constraints: "Какие есть сроки, технологии, доступы или ограничения?",
+      users: "Для кого в первую очередь создаётся решение?",
+      businessLink:
+        "Кто будет контактным лицом и как команда получит обратную связь?",
+    }[k],
+  }));
+  const analysis = validateAnalysis(rawAnalysis, calc.missing, localQuestions);
+  const questions = analysis.questions;
+  const ai = document.getElementById("ai-result");
+  document.getElementById("ai-empty").classList.add("hidden");
+  ai.classList.remove("hidden");
+  ai.innerHTML = `<div class="ai-summary"><span>✦</span><span><strong>${analysis.fallback ? (source === "api" ? "Ответ API не прошёл проверку: включён локальный fallback." : "Некорректный AI-ответ: включён локальный fallback.") : source === "api" ? "Вопросы подготовлены LLM API." : "Локальный анализ завершён."}</strong> Факты не добавлялись. Найдено пробелов: ${calc.missing.length}. Ответы ниже попадут только в редактируемую карточку.</span></div><div class="question-list">${questions.length ? questions.map((q, i) => `<div class="question-item"><strong>${i + 1}. ${esc(q.text)}</strong><input data-question-field="${esc(q.field)}" placeholder="Ваш ответ (необязательно сейчас)" /></div>`).join("") : '<div class="ai-summary">Карточка заполнена. Проверьте данные и подтвердите публикацию.</div>'}</div>`;
+  const originalContext = task.contextNeed;
+  ai.querySelectorAll("[data-question-field]").forEach((input) => {
+    const applyAnswer = () => {
+      const field = input.dataset.questionField;
+      const value = input.value.trim();
+      if (value) {
+        task = readCardFields();
+        task[field === "businessLink" ? "format" : field] =
+          field === "contextNeed" && originalContext
+            ? originalContext + " " + value
+            : value;
         document.getElementById("confirm-check").checked = false;
-        renderScore(task);
-        if (storeCard(task))
-          toast("Анализ готов: проверьте и отредактируйте карточку");
-      }
-      function aiAnalyze() {
-        const draft = document.getElementById("draft-text").value.trim();
-        if (!draft) {
-          toast("Сначала введите описание задачи", false);
-          return;
-        }
-        let task = readCardFields();
-        task.companyName =
-          task.companyName ||
-          document.getElementById("draft-company").value.trim();
-        task.industry = document.getElementById("draft-industry").value;
-        task.contact =
-          task.contact || document.getElementById("draft-contact").value;
-        task.contextNeed = task.contextNeed || draft;
-        task.title = task.title || draft.split(/[.!?]/)[0].slice(0, 60);
-        const calc = calculateScore(task);
-        Object.assign(task, calc);
         setCardFields(task);
-        const simulate = document.getElementById("simulate-ai-error");
-        const remote =
-          typeof fetch === "function"
-            ? simulate?.checked
-              ? Promise.reject(new Error("demo invalid response"))
-              : requestLLM("/api/llm/clarify", {
-                  draft,
-                  card: task,
-                  missingFields: calc.missing,
-                })
-            : null;
-        if (remote && typeof remote.then === "function") {
-          document.getElementById("ai-empty").classList.add("hidden");
-          document.getElementById("ai-result").classList.remove("hidden");
-          document.getElementById("ai-result").innerHTML =
-            '<div class="ai-summary"><span>✦</span><span><strong>Запрашиваю уточнения у LLM API…</strong> Ключ и запрос остаются на сервере.</span></div>';
-          remote
-            .then((value) => renderAnalysis(task, calc, value, "api"))
-            .catch(() =>
-              renderAnalysis(
-                task,
-                calc,
-                { missingFields: calc.missing, questions: [], suggestions: [] },
-                "fallback",
-              ),
-            );
-          return;
-        }
-        renderAnalysis(
-          task,
+      }
+    };
+    input.addEventListener("input", applyAnswer);
+    input.addEventListener("change", applyAnswer);
+  });
+  document.getElementById("confirm-check").checked = false;
+  renderScore(task);
+  if (storeCard(task))
+    toast("Анализ готов: проверьте и отредактируйте карточку");
+}
+function setAnalysisBusy(busy) {
+  analysisBusy = busy;
+  const button = document.getElementById("analyze-btn");
+  button.disabled = busy;
+  button.textContent = busy ? "✦ Готовлю уточняющие вопросы…" : "✦ Проверить полноту и создать карточку";
+}
+function aiAnalyze() {
+  if (analysisBusy) return;
+  const draft = document.getElementById("draft-text").value.trim();
+  if (!draft) {
+    toast("Сначала введите описание задачи", false);
+    return;
+  }
+  let task = readCardFields();
+  task.companyName =
+    task.companyName || document.getElementById("draft-company").value.trim();
+  task.industry = document.getElementById("draft-industry").value;
+  task.contact = task.contact || document.getElementById("draft-contact").value;
+  task.contextNeed = task.contextNeed || draft;
+  task.title = task.title || draft.split(/[.!?]/)[0].slice(0, 60);
+  const calc = calculateScore(task);
+  Object.assign(task, calc);
+  setCardFields(task);
+  const localQuestions = calc.missing.map((k) => ({ field: k, text: "" }));
+  const simulate = document.getElementById("simulate-ai-error");
+  const requestId = ++analysisRequestId;
+  const remote =
+    typeof fetch === "function"
+      ? simulate?.checked
+        ? Promise.reject(new Error("demo invalid response"))
+        : requestLLM("/api/llm/clarify", {
+            draft,
+            card: task,
+            missingFields: calc.missing,
+          })
+      : null;
+  if (remote && typeof remote.then === "function") {
+    setAnalysisBusy(true);
+    document.getElementById("ai-empty").classList.add("hidden");
+    document.getElementById("ai-result").classList.remove("hidden");
+    document.getElementById("ai-result").innerHTML =
+      '<div class="ai-summary"><span>✦</span><span><strong>Запрашиваю уточнения у LLM API…</strong> Ключ и запрос остаются на сервере.</span></div>';
+    remote
+      .then((value) => {
+        if (requestId === analysisRequestId) renderAnalysis(readCardFields(), calc, value, "api");
+      })
+      .catch(() => {
+        if (requestId === analysisRequestId) renderAnalysis(
+          readCardFields(),
           calc,
-          { missingFields: calc.missing, questions: [], suggestions: [] },
+          {
+            missingFields: calc.missing,
+            questions: localQuestions,
+            suggestions: [],
+          },
           "fallback",
         );
-      }
-      function publish() {
-        const task = readCardFields();
-        if (
-          !task.title ||
-          !task.contact ||
-          !document.getElementById("confirm-check").checked
-        ) {
-          toast("Нужны название, контакт и ручное подтверждение", false);
-          return;
-        }
-        task.published = true;
-        task.publishedAt = task.publishedAt || Date.now();
-        if (!storeCard(task)) return;
-        renderCatalog();
-        toast("Задача опубликована в общем каталоге");
-        goTo("catalog");
-      }
-      function dependentFallback(parent, role, focus) {
-        const parentTitle = parent.title || "задача заказчика";
-        const context =
-          parent.contextNeed || "Контекст в родительской карточке не указан.";
-        const data =
-          parent.data ||
-          "Данные и материалы в родительской карточке не указаны.";
-        const expected =
-          parent.expectedResult ||
-          "Ожидаемый результат в родительской карточке не указан.";
-        const criteria =
-          parent.successCriteria ||
-          "Критерии приёмки в родительской карточке не указаны.";
-        const limits =
-          parent.constraints ||
-          "Ограничения в родительской карточке не указаны.";
-        return {
-          title: `${focus} · зависимое задание`,
-          goal: `Подготовить «${focus}» как часть задачи «${parentTitle}». Работа должна помогать приблизиться к результату заказчика: ${expected}`,
-          input_data: `Родительская задача: ${context}\nМатериалы от заказчика: ${data}`,
-          expected_artifact: `Артефакт по фокусу «${focus}» от исполнителя роли «${role}». Формат артефакта нужно подтвердить с заказчиком до начала работы.`,
-          acceptance_criteria: `Фокус закрыт и связан с задачей «${parentTitle}». Проверка проводится по критерию заказчика: ${criteria}`,
-          constraints: `Ограничения родительской задачи: ${limits}\nНе расширять объём работ без согласования с заказчиком.`,
-        };
-      }
-      function openDependentAgent(taskId) {
-        const parent = state.tasks.find((t) => t.id === taskId);
-        if (!parent) return;
-        dependentParentTaskId = taskId;
-        document.getElementById("dependent-parent-context").innerHTML =
-          `<span class="parent-label">РОДИТЕЛЬСКАЯ ЗАДАЧА</span><strong>${esc(parent.title || "Без названия")}</strong><p>${esc((parent.contextNeed || "Описание не добавлено").slice(0, 220))}</p><span class="parent-score">${parent.score || 0}/100 · ${esc(parent.industry || "Другое")}</span>`;
-        document.getElementById("dependent-focus").value = (
-          parent.expectedResult || ""
-        )
-          .split(/[.!?]/)[0]
-          .slice(0, 100);
-        document
-          .getElementById("dependent-agent-empty")
-          .classList.remove("hidden");
+      })
+      .finally(() => {
+        if (requestId === analysisRequestId) setAnalysisBusy(false);
+      });
+    return;
+  }
+  renderAnalysis(
+    task,
+    calc,
+    { missingFields: calc.missing, questions: localQuestions, suggestions: [] },
+    "fallback",
+  );
+}
+function publish() {
+  const task = readCardFields();
+  if (
+    !task.title ||
+    !task.contact ||
+    !document.getElementById("confirm-check").checked
+  ) {
+    toast("Нужны название, контакт и ручное подтверждение", false);
+    return;
+  }
+  task.published = true;
+  task.publishedAt = task.publishedAt || Date.now();
+  if (!storeCard(task)) return;
+  renderCatalog();
+  toast("Задача опубликована в общем каталоге");
+  goTo("catalog");
+}
+function dependentFallback(parent, role, focus) {
+  const parentTitle = parent.title || "задача заказчика";
+  const context =
+    parent.contextNeed || "Контекст в родительской карточке не указан.";
+  const data =
+    parent.data || "Данные и материалы в родительской карточке не указаны.";
+  const expected =
+    parent.expectedResult ||
+    "Ожидаемый результат в родительской карточке не указан.";
+  const criteria =
+    parent.successCriteria ||
+    "Критерии приёмки в родительской карточке не указаны.";
+  const limits =
+    parent.constraints || "Ограничения в родительской карточке не указаны.";
+  return {
+    title: `${focus} · зависимое задание`,
+    goal: `Подготовить «${focus}» как часть задачи «${parentTitle}». Работа должна помогать приблизиться к результату заказчика: ${expected}`,
+    input_data: `Родительская задача: ${context}\nМатериалы от заказчика: ${data}`,
+    expected_artifact: `Артефакт по фокусу «${focus}» от исполнителя роли «${role}». Формат артефакта нужно подтвердить с заказчиком до начала работы.`,
+    acceptance_criteria: `Фокус закрыт и связан с задачей «${parentTitle}». Проверка проводится по критерию заказчика: ${criteria}`,
+    constraints: `Ограничения родительской задачи: ${limits}\nНе расширять объём работ без согласования с заказчиком.`,
+  };
+}
+function openDependentAgent(taskId) {
+  const parent = state.tasks.find((t) => t.id === taskId);
+  if (!parent) return;
+  dependentRequestId++;
+  setDependentBusy(false);
+  dependentSource = null;
+  fillDependentFields({});
+  dependentParentTaskId = taskId;
+  document.getElementById("dependent-parent-context").innerHTML =
+    `<span class="parent-label">РОДИТЕЛЬСКАЯ ЗАДАЧА</span><strong>${esc(parent.title || "Без названия")}</strong><p>${esc((parent.contextNeed || "Описание не добавлено").slice(0, 220))}</p><span class="parent-score">${parent.score || 0}/100 · ${esc(parent.industry || "Другое")}</span>`;
+  document.getElementById("dependent-focus").value = (
+    parent.expectedResult || ""
+  )
+    .split(/[.!?]/)[0]
+    .slice(0, 100);
+  document.getElementById("dependent-agent-empty").classList.remove("hidden");
+  document.getElementById("dependent-agent-result").classList.add("hidden");
+  document.getElementById("dependent-modal").classList.remove("hidden");
+}
+function fillDependentFields(task) {
+  document
+    .querySelectorAll("[data-dependent-field]")
+    .forEach((el) => (el.value = task[el.dataset.dependentField] || ""));
+}
+function setDependentBusy(busy) {
+  dependentBusy = busy;
+  ["dependent-generate-btn", "dependent-regenerate-btn", "save-dependent-btn", "dependent-role", "dependent-focus"].forEach((id) => {
+    document.getElementById(id).disabled = busy;
+  });
+  document.querySelectorAll("[data-dependent-field]").forEach((el) => (el.disabled = busy));
+  document.getElementById("dependent-generate-btn").textContent = busy
+    ? "✦ Готовлю карточку…"
+    : "✦ Сгенерировать карточку агентом";
+}
+function generateDependentAgent() {
+  if (dependentBusy) return;
+  const parent = state.tasks.find((t) => t.id === dependentParentTaskId);
+  const focus = document.getElementById("dependent-focus").value.trim();
+  const role = document.getElementById("dependent-role").value;
+  if (!parent || !focus) {
+    toast("Укажите фокус зависимого задания", false);
+    return;
+  }
+  const local = dependentFallback(parent, role, focus);
+  const requestId = ++dependentRequestId;
+  dependentSource = null;
+  fillDependentFields({});
+  const remote = requestLLM("/api/llm/decompose", {
+    parent_task_title: parent.title,
+    parent_task_description: {
+      contextNeed: parent.contextNeed,
+      users: parent.users,
+      data: parent.data,
+      expectedResult: parent.expectedResult,
+      successCriteria: parent.successCriteria,
+      constraints: parent.constraints,
+    },
+    role,
+    focus,
+  });
+  if (remote && typeof remote.then === "function") {
+    setDependentBusy(true);
+    document.getElementById("dependent-agent-empty").classList.add("hidden");
+    document
+      .getElementById("dependent-agent-result")
+      .classList.remove("hidden");
+    document
+      .getElementById("dependent-agent-result")
+      .querySelector(".agent-result-note").innerHTML =
+      "<strong>Запрашиваю карточку у LLM API…</strong> Ответ будет проверен по строгой JSON-схеме.";
+    remote
+      .then((value) => {
+        if (requestId !== dependentRequestId) return;
+        const result = validateDependentOutput(value);
+        dependentSource = result ? "llm-api" : "local-fallback";
+        fillDependentFields(result || local);
         document
           .getElementById("dependent-agent-result")
-          .classList.add("hidden");
-        document.getElementById("dependent-modal").classList.remove("hidden");
-      }
-      function fillDependentFields(task) {
-        document
-          .querySelectorAll("[data-dependent-field]")
-          .forEach((el) => (el.value = task[el.dataset.dependentField] || ""));
-      }
-      function generateDependentAgent() {
-        const parent = state.tasks.find((t) => t.id === dependentParentTaskId);
-        const focus = document.getElementById("dependent-focus").value.trim();
-        const role = document.getElementById("dependent-role").value;
-        if (!parent || !focus) {
-          toast("Укажите фокус зависимого задания", false);
-          return;
-        }
-        const local = dependentFallback(parent, role, focus);
-        const remote = requestLLM("/api/llm/decompose", {
-          parent_task_title: parent.title,
-          parent_task_description: {
-            contextNeed: parent.contextNeed,
-            users: parent.users,
-            data: parent.data,
-            expectedResult: parent.expectedResult,
-            successCriteria: parent.successCriteria,
-            constraints: parent.constraints,
-          },
-          role,
-          focus,
-        });
-        if (remote && typeof remote.then === "function") {
-          document
-            .getElementById("dependent-agent-empty")
-            .classList.add("hidden");
-          document
-            .getElementById("dependent-agent-result")
-            .classList.remove("hidden");
-          document
-            .getElementById("dependent-agent-result")
-            .querySelector(".agent-result-note").innerHTML =
-            "<strong>Запрашиваю карточку у LLM API…</strong> Ответ будет проверен по строгой JSON-схеме.";
-          remote
-            .then((value) => {
-              const result = validateDependentOutput(value);
-              fillDependentFields(result || local);
-              document
-                .getElementById("dependent-agent-result")
-                .querySelector(".agent-result-note").innerHTML = result
-                ? "<strong>Черновик подготовлен LLM API.</strong> Проверьте поля и связь с родительской задачей."
-                : "<strong>Ответ API не прошёл проверку.</strong> Использован локальный fallback; проверьте поля.";
-              toast(
-                result
-                  ? "LLM API подготовил черновик"
-                  : "Включён локальный fallback",
-              );
-            })
-            .catch(() => {
-              fillDependentFields(local);
-              document
-                .getElementById("dependent-agent-result")
-                .querySelector(".agent-result-note").innerHTML =
-                "<strong>LLM API недоступен.</strong> Запустите server.py или server.js и проверьте .env. Использован локальный fallback.";
-              toast("LLM API недоступен: запустите server.py", false);
-            });
-          return;
-        }
+          .querySelector(".agent-result-note").innerHTML = result
+          ? "<strong>Черновик подготовлен LLM API.</strong> Проверьте поля и связь с родительской задачей."
+          : "<strong>Ответ API не прошёл проверку.</strong> Использован локальный fallback; проверьте поля.";
+        toast(
+          result ? "LLM API подготовил черновик" : "Включён локальный fallback",
+        );
+      })
+      .catch(() => {
+        if (requestId !== dependentRequestId) return;
+        dependentSource = "local-fallback";
         fillDependentFields(local);
         document
-          .getElementById("dependent-agent-empty")
-          .classList.add("hidden");
-        document
           .getElementById("dependent-agent-result")
-          .classList.remove("hidden");
-        toast("Локальный fallback подготовил черновик");
-      }
-      function saveDependentTask() {
-        const parent = state.tasks.find((t) => t.id === dependentParentTaskId);
-        const task = {
-          id: "dependent-" + Date.now(),
-          parentTaskId: dependentParentTaskId,
-          parentTitle: parent?.title || "Задача заказчика",
-          role: document.getElementById("dependent-role").value,
-          focus: document.getElementById("dependent-focus").value.trim(),
-          status: "draft",
-          source: "llm-api-or-local-fallback",
-          createdAt: Date.now(),
-        };
-        document
-          .querySelectorAll("[data-dependent-field]")
-          .forEach((el) => (task[el.dataset.dependentField] = el.value.trim()));
-        if (!task.title) {
-          toast("Добавьте название зависимого задания", false);
-          return;
-        }
-        state.dependentTasks = state.dependentTasks || [];
-        state.dependentTasks.unshift(task);
-        persist();
-        document.getElementById("dependent-modal").classList.add("hidden");
-        renderDependent();
-        goTo("dependent");
-        toast("Зависимая карточка сохранена как черновик");
-      }
-      function renderDependent() {
-        const list = document.getElementById("dependent-list");
-        const tasks = state.dependentTasks || [];
-        document.getElementById("dependent-total").textContent = tasks.length;
-        if (!tasks.length) {
-          list.innerHTML =
-            '<div class="empty-state"><div class="empty-icon">⌁</div><p>Здесь появятся зависимые задания.<br/>Откройте каталог и запустите AI-агента у задачи заказчика.</p></div>';
-          return;
-        }
-        list.innerHTML = tasks
-          .map(
-            (task) =>
-              `<article class="dependent-card"><div class="dependent-card-head"><div><span class="dependent-status">Черновик</span><h3>${esc(task.title)}</h3><p>Родитель: <strong>${esc(task.parentTitle)}</strong></p></div><span class="role-pill">${esc(task.role || "Роль не указана")}</span></div><div class="dependent-card-grid"><div><span>Цель</span><p>${esc(task.goal || task.objective || "—")}</p></div><div><span>Ожидаемый артефакт</span><p>${esc(task.expected_artifact || task.deliverable || "—")}</p></div><div><span>Критерии приёмки</span><p>${esc(task.acceptance_criteria || task.acceptanceCriteria || "—")}</p></div><div><span>Ограничения</span><p>${esc(task.constraints || "—")}</p></div></div></article>`,
-          )
-          .join("");
-      }
-      function renderCatalog() {
-        const query = (document.getElementById("catalog-search")?.value || "")
-          .trim()
-          .toLowerCase();
-        const level = document.getElementById("catalog-level")?.value || "all";
-        const sort = document.getElementById("catalog-sort")?.value || "rating";
-        let tasks = state.tasks
-          .filter((t) => t.published)
-          .filter(
-            (t) =>
-              !query ||
-              [t.title, t.companyName, t.industry, t.contextNeed, t.users]
-                .join(" ")
-                .toLowerCase()
-                .includes(query),
-          );
-        tasks = tasks.filter(
-          (t) => level === "all" || readiness(t.score)[0] === level,
-        );
-        tasks.sort((a, b) =>
-          sort === "new"
-            ? (b.publishedAt || 0) - (a.publishedAt || 0)
-            : b.score - a.score,
-        );
-        document.getElementById("catalog-total").textContent =
-          state.tasks.filter((t) => t.published).length;
-        const list = document.getElementById("catalog-list");
-        if (!tasks.length) {
-          list.innerHTML =
-            '<div class="empty-state"><div class="empty-icon">⌕</div><p>Задач по фильтру не найдено.</p></div>';
-          return;
-        }
-        list.innerHTML = tasks
-          .map((t) => {
-            const [level, label] = readiness(t.score);
-            return `<article class="task-card"><div class="task-card-top"><div><h3>${esc(t.title)}</h3><div class="industry-tag">${esc(t.companyName || "Компания не указана")} · ${esc(t.industry || "Другое")}</div></div><span class="score-mini">${t.score}/100</span></div><p>${esc((t.contextNeed || "Описание пока не добавлено").slice(0, 150))}${(t.contextNeed || "").length > 150 ? "…" : ""}</p><p>Контакт: ${esc(t.contact || "Не указан")}</p><details><summary>Поля и расчёт рейтинга</summary>${scoreDetails(t)}${["users", "data", "expectedResult", "successCriteria", "constraints", "format"].map((key) => `<p><strong>${esc(FIELD_LABELS[key] || "Формат взаимодействия")}:</strong> ${esc(t[key] || "Не указано")}</p>`).join("")}</details><div class="card-meta"><span class="meta-tag ${level}">${label}</span><span class="meta-tag">${(t.offers || []).length} откликов</span></div><div class="task-card-actions"><button class="secondary-btn" data-dependent-task="${esc(t.id)}">✦ Создать зависимое</button><button class="primary-btn" data-offer-task="${t.id}">Подать предложение →</button></div></article>`;
-          })
-          .join("");
-        list
-          .querySelectorAll("[data-offer-task]")
-          .forEach((btn) =>
-            btn.addEventListener("click", () =>
-              openOffer(btn.dataset.offerTask),
-            ),
-          );
-        list
-          .querySelectorAll("[data-dependent-task]")
-          .forEach((btn) =>
-            btn.addEventListener("click", () =>
-              openDependentAgent(btn.dataset.dependentTask),
-            ),
-          );
-      }
-      function normalizeWords(value = "") {
-        return String(value)
+          .querySelector(".agent-result-note").innerHTML =
+          "<strong>LLM API недоступен.</strong> Запустите server.py или server.js и проверьте .env. Использован локальный fallback.";
+        toast("LLM API недоступен: запустите server.py", false);
+      })
+      .finally(() => {
+        if (requestId === dependentRequestId) setDependentBusy(false);
+      });
+    return;
+  }
+  fillDependentFields(local);
+  dependentSource = "local-fallback";
+  document.getElementById("dependent-agent-empty").classList.add("hidden");
+  document.getElementById("dependent-agent-result").classList.remove("hidden");
+  document.getElementById("dependent-agent-result").querySelector(".agent-result-note").textContent =
+    "Черновик подготовлен локально. Проверьте поля перед сохранением.";
+  toast("Локальный fallback подготовил черновик");
+}
+function saveDependentTask() {
+  if (dependentBusy || !dependentSource) return;
+  const parent = state.tasks.find((t) => t.id === dependentParentTaskId);
+  const task = {
+    id: "dependent-" + Date.now(),
+    parentTaskId: dependentParentTaskId,
+    parentTitle: parent?.title || "Задача заказчика",
+    role: document.getElementById("dependent-role").value,
+    focus: document.getElementById("dependent-focus").value.trim(),
+    status: "draft",
+    source: dependentSource,
+    createdAt: Date.now(),
+  };
+  document
+    .querySelectorAll("[data-dependent-field]")
+    .forEach((el) => (task[el.dataset.dependentField] = el.value.trim()));
+  const fields = ["title", "goal", "input_data", "expected_artifact", "acceptance_criteria", "constraints"];
+  if (!parent || fields.some((key) => !task[key])) {
+    toast("Проверьте и заполните все поля зависимого задания", false);
+    return;
+  }
+  state.dependentTasks = state.dependentTasks || [];
+  state.dependentTasks.unshift(task);
+  if (!persist()) {
+    state.dependentTasks.shift();
+    return;
+  }
+  document.getElementById("dependent-modal").classList.add("hidden");
+  renderDependent();
+  goTo("dependent");
+  toast("Зависимая карточка сохранена как черновик");
+}
+function renderDependent() {
+  const list = document.getElementById("dependent-list");
+  const tasks = state.dependentTasks || [];
+  document.getElementById("dependent-total").textContent = tasks.length;
+  if (!tasks.length) {
+    list.innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⌁</div><p>Здесь появятся зависимые задания.<br/>Откройте каталог и запустите AI-агента у задачи заказчика.</p></div>';
+    return;
+  }
+  list.innerHTML = tasks
+    .map(
+      (task) =>
+        `<article class="dependent-card"><div class="dependent-card-head"><div><span class="dependent-status">Черновик · ${task.source === "llm-api" ? "LLM API" : task.source === "local-fallback" ? "Локальный fallback" : "Источник не сохранён"}</span><h3>${esc(task.title)}</h3><p>Родитель: <strong>${esc(task.parentTitle)}</strong></p></div><span class="role-pill">${esc(task.role || "Роль не указана")}</span></div><div class="dependent-card-grid"><div><span>Цель</span><p>${esc(task.goal || task.objective || "—")}</p></div><div><span>Входные данные</span><p>${esc(task.input_data || "—")}</p></div><div><span>Ожидаемый артефакт</span><p>${esc(task.expected_artifact || task.deliverable || "—")}</p></div><div><span>Критерии приёмки</span><p>${esc(task.acceptance_criteria || task.acceptanceCriteria || "—")}</p></div><div><span>Ограничения</span><p>${esc(task.constraints || "—")}</p></div></div></article>`,
+    )
+    .join("");
+}
+function renderCatalog() {
+  const query = (document.getElementById("catalog-search")?.value || "")
+    .trim()
+    .toLowerCase();
+  const level = document.getElementById("catalog-level")?.value || "all";
+  const industry = document.getElementById("catalog-industry")?.value || "all";
+  const sort = document.getElementById("catalog-sort")?.value || "rating";
+  let tasks = state.tasks
+    .filter((t) => t.published)
+    .filter(
+      (t) =>
+        !query ||
+        [t.title, t.companyName, t.industry, t.contextNeed, t.users]
+          .join(" ")
           .toLowerCase()
-          .replace(/[^a-zа-яё0-9]+/gi, " ")
-          .split(/\s+/)
-          .filter((word) => word.length > 3);
-      }
-      function teamMatch(task, team) {
-        const industryMap = {
-          Здравоохранение: [
-            "health",
-            "healthtech",
-            "медицин",
-            "клиник",
-            "здрав",
-          ],
-          Образование: ["education", "edtech", "образован"],
-          Ритейл: ["retail", "магазин", "ритейл"],
-          Логистика: ["logistics", "логист", "достав"],
-          Финансы: ["fintech", "finance", "финанс"],
-        };
-        const text = normalizeWords(
-          `${task.industry || ""} ${task.contextNeed || ""} ${task.users || ""} ${task.expectedResult || ""}`,
-        );
-        const teamText = normalizeWords(
-          `${team.interests || ""} ${team.skills || ""} ${team.tech || ""}`,
-        );
-        const industryWords = industryMap[task.industry] || [];
-        const industryHit = industryWords.some((word) =>
-          `${team.interests || ""} ${team.skills || ""}`
-            .toLowerCase()
-            .includes(word),
-        );
-        const overlap = [
-          ...new Set(text.filter((word) => teamText.includes(word))),
-        ];
-        const score = Math.min(
-          98,
-          35 +
-            (industryHit ? 35 : 0) +
-            Math.min(20, overlap.length * 5) +
-            (team.tech ? 8 : 0),
-        );
-        const reason = industryHit
-          ? `Интересы команды связаны с отраслью «${task.industry}».`
-          : "Прямое совпадение отрасли не найдено; совпадение построено по описанию навыков и технологий.";
-        return { score, reason, overlap };
-      }
-      function renderTeamRecommendations(task) {
-        const ranked = state.teams
-          .map((team) => ({ team, ...teamMatch(task, team) }))
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 3);
-        document.getElementById("team-recommendations").innerHTML =
-          `<div class="recommendations-head"><strong>AI-рекомендации студенту</strong><span>объяснимое совпадение</span></div>${ranked.map((item, index) => `<div class="recommendation-item"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(item.team.name)}</strong><p>${esc(item.reason)} ${item.overlap.length ? `Общие признаки: ${esc(item.overlap.slice(0, 3).join(", "))}.` : ""}</p></div><b>${item.score}/100</b></div>`).join("")}`;
-      }
-      function reviewOffer(idea, plan, link) {
-        const missing = [];
-        if (idea.length < 20) missing.push("более конкретное описание идеи");
-        if (plan.length < 20) missing.push("этапы и срок в плане");
-        const hasLink = Boolean(link);
-        return {
-          complete: missing.length === 0,
-          score: missing.length ? 50 : hasLink ? 100 : 85,
-          missing,
-          hasLink,
-        };
-      }
-      function updateOfferReview() {
-        const review = reviewOffer(
-          document.getElementById("offer-idea").value.trim(),
-          document.getElementById("offer-plan").value.trim(),
-          document.getElementById("offer-link").value.trim(),
-        );
-        const el = document.getElementById("offer-ai-review");
-        el.className = `offer-ai-review ${review.complete ? "complete" : "incomplete"}`;
-        el.innerHTML = review.complete
-          ? `<strong>AI-проверка: отклик выглядит полным · ${review.score}/100</strong><span>${review.hasLink ? "Ссылка на прототип добавлена." : "Ссылка на прототип необязательна, но усилит предложение."}</span>`
-          : `<strong>AI-проверка: нужно уточнить</strong><span>${review.missing.join(" и ")}.</span>`;
-      }
-      function compareTaskOffers(taskId) {
-        const task = state.tasks.find((item) => item.id === taskId);
-        const target = document.getElementById(`comparison-${taskId}`);
-        if (!task || !target) return;
-        const rows = (task.offers || [])
-          .map((offer) => {
-            const team = state.teams.find(
-              (item) => item.id === offer.teamId,
-            ) || { name: "Команда", interests: "", skills: "", tech: "" };
-            const review = reviewOffer(
-              offer.idea || "",
-              offer.plan || "",
-              offer.link || "",
-            );
-            const match = teamMatch(task, team);
-            return { offer, team, review, match };
-          })
-          .sort(
-            (a, b) =>
-              b.review.score + b.match.score - (a.review.score + a.match.score),
-          );
-        if (!rows.length) {
-          target.innerHTML =
-            '<p class="muted">Для сравнения нужны отклики команд.</p>';
-          return;
-        }
-        target.innerHTML = `<div class="comparison-title"><strong>AI-сравнение предложений</strong><span>Итог не заменяет решение бизнеса</span></div>${rows.map((row, index) => `<div class="comparison-row"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(row.team.name)}</strong><p>${row.review.complete ? "Полнота отклика достаточная" : "Нужно уточнить: " + esc(row.review.missing.join(", "))}. Совпадение с задачей: ${row.match.score}/100.</p></div><b>${Math.round((row.review.score + row.match.score) / 2)}/100</b></div>`).join("")}`;
-      }
-      function openProgress(taskId, offerId) {
-        const task = state.tasks.find((item) => item.id === taskId);
-        const offer = (task?.offers || []).find((item) => item.id === offerId);
-        const team = state.teams.find((item) => item.id === offer?.teamId);
-        if (!task || !offer) return;
-        progressOfferRef = { taskId, offerId };
-        document.getElementById("progress-modal-subtitle").textContent =
-          `${team?.name || "Команда"} · ${task.title}`;
-        document.getElementById("progress-note").value = "";
-        document.getElementById("progress-modal").classList.remove("hidden");
-      }
-      function saveProgress() {
-        const task = state.tasks.find(
-          (item) => item.id === progressOfferRef?.taskId,
-        );
-        const offer = (task?.offers || []).find(
-          (item) => item.id === progressOfferRef?.offerId,
-        );
-        const note = document.getElementById("progress-note").value.trim();
-        if (!offer || note.length < 8) {
-          toast("Опишите фактический результат этапа", false);
-          return;
-        }
-        offer.progressLog = offer.progressLog || [];
-        offer.progressLog.push({
-          id: "progress-" + Date.now(),
-          stage: document.getElementById("progress-stage").value,
-          note,
-          status: document.getElementById("progress-status").value,
-          createdAt: Date.now(),
-        });
-        persist();
-        document.getElementById("progress-modal").classList.add("hidden");
-        renderOffers();
-        toast("Фактический прогресс зафиксирован");
-      }
-      function renderOffers() {
-        const published = state.tasks.filter(
-          (t) => t.published && (t.offers || []).length,
-        );
-        const all = published.length
-          ? published
-          : state.tasks.filter((t) => t.published).slice(0, 2);
-        const list = document.getElementById("offers-list");
-        if (!all.length) {
-          list.innerHTML =
-            '<div class="empty-state"><div class="empty-icon">↗</div><p>Пока нет опубликованных задач.</p></div>';
-          return;
-        }
-        list.innerHTML = all
-          .map((task) => {
-            const offers = task.offers || [];
-            return `<article class="offer-task"><div class="offer-task-head"><div><p class="eyebrow">${esc(task.companyName || "Компания не указана")} · ${esc(task.industry || "Другое")} · ${task.score}/100</p><h3>${esc(task.title)}</h3></div><div class="offer-head-actions"><span class="meta-tag">${offers.length} предложений</span>${offers.length ? `<button class="secondary-btn compare-btn" data-compare-task="${esc(task.id)}">✦ Сравнить предложения</button>` : ""}</div></div><div id="comparison-${esc(task.id)}" class="offer-comparison hidden"></div>${
-              offers.length
-                ? offers
-                    .map((o) => {
-                      const team = state.teams.find(
-                        (x) => x.id === o.teamId,
-                      ) || { name: "Команда" };
-                      const progress = (o.progressLog || []).slice(-1)[0];
-                      return `<div class="offer-item"><div><span class="offer-label">Команда</span><h4>${esc(team.name)}</h4><p>${esc(team.skills || "")}</p></div><div><span class="offer-label">Предложение · AI-проверка ${reviewOffer(o.idea || "", o.plan || "", o.link || "").score}/100</span><p><strong>${esc(o.idea)}</strong>\n${esc(o.plan)}${o.link ? `\n<a href="${esc(safeLink(o.link))}" target="_blank" rel="noreferrer">Открыть прототип</a>` : ""}</p>${progress ? `<div class="progress-history"><strong>Последний этап: ${esc(progress.stage)}</strong><span>${esc(progress.note)}</span></div>` : ""}</div><div class="offer-actions">${o.status === "pending" ? `<button class="accept-btn" data-decision="accepted" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Принять</button><button class="reject-btn" data-decision="rejected" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Отклонить</button>` : o.status === "accepted" ? `<span class="decision accepted">Принято</span><button class="progress-btn" data-progress-task="${esc(task.id)}" data-progress-offer="${esc(o.id)}">+ Этап</button>` : `<span class="decision rejected">Отклонено</span>`}</div></div>`;
-                    })
-                    .join("")
-                : '<p class="muted">Откликов пока нет. Переключитесь в режим студента и отправьте предложение из каталога.</p>'
-            }</article>`;
-          })
-          .join("");
-        list
-          .querySelectorAll("[data-decision]")
-          .forEach((btn) =>
-            btn.addEventListener("click", () =>
-              decideOffer(
-                btn.dataset.task,
-                btn.dataset.offer,
-                btn.dataset.decision,
-              ),
-            ),
-          );
-        list.querySelectorAll("[data-compare-task]").forEach((btn) =>
-          btn.addEventListener("click", () => {
-            const target = document.getElementById(
-              `comparison-${btn.dataset.compareTask}`,
-            );
-            target.classList.toggle("hidden");
-            if (!target.classList.contains("hidden"))
-              compareTaskOffers(btn.dataset.compareTask);
-          }),
-        );
-        list
-          .querySelectorAll("[data-progress-task]")
-          .forEach((btn) =>
-            btn.addEventListener("click", () =>
-              openProgress(btn.dataset.progressTask, btn.dataset.progressOffer),
-            ),
-          );
-      }
-      function decideOffer(taskId, offerId, status) {
-        const task = state.tasks.find((t) => t.id === taskId);
-        const offer = (task?.offers || []).find((o) => o.id === offerId);
-        if (offer && ["accepted", "rejected"].includes(status)) {
-          if (currentRole !== "business") {
-            toast("Переключитесь в режим бизнеса", false);
-            return;
-          }
-          if (
-            status === "accepted" &&
-            task.offers.some(
-              (item) => item.id !== offerId && item.status === "accepted",
-            )
-          ) {
-            toast("Для этой задачи уже выбрана команда", false);
-            return;
-          }
-          offer.status = status;
-          if (!persist()) return;
-          renderOffers();
-          toast(
-            status === "accepted"
-              ? "Команда принята бизнесом"
-              : "Отклик отклонён",
-          );
-        }
-      }
-      function openOffer(taskId) {
-        offerTaskId = taskId;
-        const task = state.tasks.find((t) => t.id === taskId);
-        document.getElementById("offer-modal-title").textContent =
-          `Отклик на «${task.title}»`;
-        document.getElementById("offer-modal-subtitle").textContent =
-          `Рейтинг задачи: ${task.score}/100 · отклики не ограничены`;
-        document.getElementById("offer-team").innerHTML = state.teams
-          .map(
-            (t) =>
-              `<option value="${t.id}">${esc(t.name)} · ${esc(t.skills)}</option>`,
-          )
-          .join("");
-        document.getElementById("offer-idea").value = "";
-        document.getElementById("offer-plan").value = "";
-        document.getElementById("offer-link").value = "";
-        renderTeamRecommendations(task);
-        updateOfferReview();
-        document.getElementById("offer-modal").classList.remove("hidden");
-      }
-      function submitOffer() {
-        const task = state.tasks.find((t) => t.id === offerTaskId);
-        const idea = document.getElementById("offer-idea").value.trim();
-        const plan = document.getElementById("offer-plan").value.trim();
-        const link = document.getElementById("offer-link").value.trim();
-        const teamId = document.getElementById("offer-team").value;
-        if (
-          !task?.published ||
-          !state.teams.some((team) => team.id === teamId)
-        ) {
-          toast("Выберите задачу и команду", false);
-          return;
-        }
-        if (link && !safeLink(link)) {
-          toast("Ссылка должна начинаться с https:// или http://", false);
-          return;
-        }
-        if (task.offers.some((offer) => offer.teamId === teamId)) {
-          toast("Эта команда уже отправила отклик", false);
-          return;
-        }
-        const review = reviewOffer(idea, plan, link);
-        if (!review.complete) {
-          toast(`AI-проверка: ${review.missing.join(" и ")}`, false);
-          return;
-        }
-        task.offers = task.offers || [];
-        task.offers.push({
-          id: "offer-" + Date.now(),
-          taskId: task.id,
-          teamId: document.getElementById("offer-team").value,
-          idea,
-          plan,
-          link,
-          status: "pending",
-          aiReview: {
-            score: review.score,
-            complete: review.complete,
-            reviewedAt: Date.now(),
-          },
-        });
-        if (!persist()) return;
-        document.getElementById("offer-modal").classList.add("hidden");
-        renderCatalog();
-        renderOffers();
-        toast("Отклик проверен AI и отправлен бизнесу");
-      }
-      function updateCounts() {
-        document.getElementById("catalog-count").textContent =
-          state.tasks.filter((t) => t.published).length;
-        document.getElementById("offers-count").textContent =
-          state.tasks.reduce((n, t) => n + (t.offers || []).length, 0);
-        document.getElementById("dependent-count").textContent = (
-          state.dependentTasks || []
-        ).length;
-        document.getElementById("dependent-total").textContent = (
-          state.dependentTasks || []
-        ).length;
-      }
-      function goTo(view) {
-        currentView = view;
-        document
-          .querySelectorAll(".nav-btn")
-          .forEach((x) =>
-            x.classList.toggle("active", x.dataset.view === view),
-          );
-        document
-          .querySelectorAll(".view")
-          .forEach((x) =>
-            x.classList.toggle("active", x.id === "view-" + view),
-          );
-        if (view === "catalog") renderCatalog();
-        if (view === "dependent") renderDependent();
-        if (view === "offers") renderOffers();
-        if (view === "teams") renderData();
-      }
-      function renderData() {
-        document.getElementById("teams-data").innerHTML =
-          `<table class="data-table"><thead><tr><th>Команда</th><th>Интересы</th><th>Навыки</th><th>Технологии</th></tr></thead><tbody>${state.teams.map((t) => `<tr><td><strong>${esc(t.name)}</strong></td><td>${esc(t.interests)}</td><td>${esc(t.skills)}</td><td>${esc(t.tech)}</td></tr>`).join("")}</tbody></table>`;
-        document.getElementById("drafts-data").innerHTML =
-          `<table class="data-table"><thead><tr><th>ID</th><th>Отрасль</th><th>Черновик</th></tr></thead><tbody>${state.drafts.map((d) => `<tr><td>${esc(d.id)}</td><td>${esc(d.industry)}</td><td>${esc(d.text)}</td></tr>`).join("")}</tbody></table>`;
-        document.getElementById("cards-data").innerHTML =
-          `<table class="data-table"><thead><tr><th>Задача</th><th>Отрасль</th><th>Рейтинг</th><th>Статус</th></tr></thead><tbody>${state.tasks
-            .slice(0, 5)
-            .map(
-              (t) =>
-                `<tr><td><strong>${esc(t.title)}</strong></td><td>${esc(t.industry)}</td><td>${t.score}/100</td><td>${t.published ? "Опубликована" : "Черновик"}</td></tr>`,
-            )
-            .join("")}</tbody></table>`;
-      }
-      function loadDemo() {
-        document.getElementById("draft-text").value =
-          "Хотим сделать сервис для нашей клиники.";
-        document.getElementById("draft-company").value = "MedLine Clinic";
-        document.getElementById("draft-industry").value = "Здравоохранение";
-        document.getElementById("draft-contact").value =
-          "Алия · business@example.com";
-        activeTaskId = null;
-        document
-          .querySelectorAll("[data-field]")
-          .forEach((x) => (x.value = ""));
-        document.getElementById("confirm-check").checked = false;
-        document.getElementById("ai-empty").classList.remove("hidden");
-        document.getElementById("ai-result").classList.add("hidden");
-        renderScore({});
-        goTo("builder");
-        toast("Слабый пример загружен — нажмите «Проверить полноту»");
-      }
-      function resetDemo() {
-        try {
-          localStorage.removeItem(STORAGE_KEY);
-        } catch {
-          toast("Браузер не разрешает сброс хранилища", false);
-          return;
-        }
-        state = loadState();
-        activeTaskId = null;
-        loadDemo();
-        updateCounts();
-        toast("Данные демо восстановлены");
-      }
+          .includes(query),
+    );
+  tasks = tasks.filter(
+    (t) => level === "all" || readiness(t.score)[0] === level,
+  );
+  tasks = tasks.filter((t) => industry === "all" || t.industry === industry);
+  tasks.sort((a, b) =>
+    sort === "new"
+      ? (b.publishedAt || 0) - (a.publishedAt || 0)
+      : b.score - a.score,
+  );
+  document.getElementById("catalog-total").textContent = state.tasks.filter(
+    (t) => t.published,
+  ).length;
+  const list = document.getElementById("catalog-list");
+  if (!tasks.length) {
+    list.innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⌕</div><p>Задач по фильтру не найдено.</p></div>';
+    return;
+  }
+  list.innerHTML = tasks
+    .map((t) => {
+      const [level, label] = readiness(t.score);
+      return `<article class="task-card"><div class="task-card-top"><div><h3>${esc(t.title)}</h3><div class="industry-tag">${esc(t.companyName || "Компания не указана")} · ${esc(t.industry || "Другое")}</div></div><span class="score-mini">${t.score}/100</span></div><p>${esc((t.contextNeed || "Описание пока не добавлено").slice(0, 150))}${(t.contextNeed || "").length > 150 ? "…" : ""}</p><p>Контакт: ${esc(t.contact || "Не указан")}</p><details><summary>Поля и расчёт рейтинга</summary>${scoreDetails(t)}${["users", "data", "expectedResult", "successCriteria", "constraints", "format"].map((key) => `<p><strong>${esc(FIELD_LABELS[key] || "Формат взаимодействия")}:</strong> ${esc(t[key] || "Не указано")}</p>`).join("")}</details><div class="card-meta"><span class="meta-tag ${level}">${label}</span><span class="meta-tag">${(t.offers || []).length} откликов</span></div><div class="task-card-actions"><button class="secondary-btn" data-dependent-task="${esc(t.id)}">✦ Создать зависимое</button><button class="primary-btn" data-offer-task="${t.id}">Подать предложение →</button></div></article>`;
+    })
+    .join("");
+  list
+    .querySelectorAll("[data-offer-task]")
+    .forEach((btn) =>
+      btn.addEventListener("click", () => openOffer(btn.dataset.offerTask)),
+    );
+  list
+    .querySelectorAll("[data-dependent-task]")
+    .forEach((btn) =>
+      btn.addEventListener("click", () =>
+        openDependentAgent(btn.dataset.dependentTask),
+      ),
+    );
+}
+function normalizeWords(value = "") {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-zа-яё0-9]+/gi, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 3);
+}
+function teamMatch(task, team) {
+  const industryMap = {
+    Здравоохранение: ["health", "healthtech", "медицин", "клиник", "здрав"],
+    Образование: ["education", "edtech", "образован"],
+    Ритейл: ["retail", "магазин", "ритейл"],
+    Логистика: ["logistics", "логист", "достав"],
+    Финансы: ["fintech", "finance", "финанс"],
+  };
+  const text = normalizeWords(
+    `${task.industry || ""} ${task.contextNeed || ""} ${task.users || ""} ${task.expectedResult || ""}`,
+  );
+  const teamText = normalizeWords(
+    `${team.interests || ""} ${team.skills || ""} ${team.tech || ""}`,
+  );
+  const industryWords = industryMap[task.industry] || [];
+  const industryHit = industryWords.some((word) =>
+    `${team.interests || ""} ${team.skills || ""}`.toLowerCase().includes(word),
+  );
+  const overlap = [...new Set(text.filter((word) => teamText.includes(word)))];
+  const score = Math.min(
+    98,
+    35 +
+      (industryHit ? 35 : 0) +
+      Math.min(20, overlap.length * 5) +
+      (team.tech ? 8 : 0),
+  );
+  const reason = industryHit
+    ? `Интересы команды связаны с отраслью «${task.industry}».`
+    : "Прямое совпадение отрасли не найдено; совпадение построено по описанию навыков и технологий.";
+  return { score, reason, overlap };
+}
+function renderTeamRecommendations(task) {
+  const ranked = state.teams
+    .map((team) => ({ team, ...teamMatch(task, team) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+  document.getElementById("team-recommendations").innerHTML =
+    `<div class="recommendations-head"><strong>Рекомендации по навыкам</strong><span>объяснимое совпадение</span></div>${ranked.map((item, index) => `<div class="recommendation-item"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(item.team.name)}</strong><p>${esc(item.reason)} ${item.overlap.length ? `Общие признаки: ${esc(item.overlap.slice(0, 3).join(", "))}.` : ""}</p></div><b>${item.score}/100</b></div>`).join("")}`;
+}
+function reviewOffer(idea, plan, link) {
+  const missing = [];
+  if (idea.length < 20) missing.push("более конкретное описание идеи");
+  if (plan.length < 20) missing.push("этапы и срок в плане");
+  const hasLink = Boolean(link);
+  return {
+    complete: missing.length === 0,
+    score: missing.length ? 50 : hasLink ? 100 : 85,
+    missing,
+    hasLink,
+  };
+}
+function updateOfferReview() {
+  const review = reviewOffer(
+    document.getElementById("offer-idea").value.trim(),
+    document.getElementById("offer-plan").value.trim(),
+    document.getElementById("offer-link").value.trim(),
+  );
+  const el = document.getElementById("offer-ai-review");
+  el.className = `offer-ai-review ${review.complete ? "complete" : "incomplete"}`;
+  el.innerHTML = review.complete
+    ? `<strong>Проверка полноты: отклик выглядит полным · ${review.score}/100</strong><span>${review.hasLink ? "Ссылка на прототип добавлена." : "Ссылка на прототип необязательна, но усилит предложение."}</span>`
+    : `<strong>Проверка полноты: нужно уточнить</strong><span>${review.missing.join(" и ")}.</span>`;
+}
+function compareTaskOffers(taskId) {
+  const task = state.tasks.find((item) => item.id === taskId);
+  const target = document.getElementById(`comparison-${taskId}`);
+  if (!task || !target) return;
+  const rows = (task.offers || [])
+    .map((offer) => {
+      const team = state.teams.find((item) => item.id === offer.teamId) || {
+        name: "Команда",
+        interests: "",
+        skills: "",
+        tech: "",
+      };
+      const review = reviewOffer(
+        offer.idea || "",
+        offer.plan || "",
+        offer.link || "",
+      );
+      const match = teamMatch(task, team);
+      return { offer, team, review, match };
+    })
+    .sort(
+      (a, b) =>
+        b.review.score + b.match.score - (a.review.score + a.match.score),
+    );
+  if (!rows.length) {
+    target.innerHTML =
+      '<p class="muted">Для сравнения нужны отклики команд.</p>';
+    return;
+  }
+  target.innerHTML = `<div class="comparison-title"><strong>Сравнение предложений</strong><span>Итог не заменяет решение бизнеса</span></div>${rows.map((row, index) => `<div class="comparison-row"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(row.team.name)}</strong><p>${row.review.complete ? "Полнота отклика достаточная" : "Нужно уточнить: " + esc(row.review.missing.join(", "))}. Совпадение с задачей: ${row.match.score}/100.</p></div><b>${Math.round((row.review.score + row.match.score) / 2)}/100</b></div>`).join("")}`;
+}
+function confirmedStages(task, teamId) {
+  return new Set((task.offers || [])
+    .filter((offer) => offer.teamId === teamId)
+    .flatMap((offer) => offer.progressLog || [])
+    .filter((entry) => entry.status === "done" && entry.confirmedBy === "business" && PROGRESS_STAGES.includes(entry.stage))
+    .map((entry) => entry.stage));
+}
+function teamPoints(teamId) {
+  return state.tasks.reduce((sum, task) => sum + confirmedStages(task, teamId).size * STAGE_POINTS, 0);
+}
+function openProgress(taskId, offerId) {
+  const task = state.tasks.find((item) => item.id === taskId);
+  const offer = (task?.offers || []).find((item) => item.id === offerId);
+  const team = state.teams.find((item) => item.id === offer?.teamId);
+  if (!task || !offer || offer.status !== "accepted" || currentRole !== "business") {
+    toast("Подтвердить этап может бизнес у принятой команды", false);
+    return;
+  }
+  progressOfferRef = { taskId, offerId };
+  document.getElementById("progress-modal-subtitle").textContent =
+    `${team?.name || "Команда"} · ${task.title}`;
+  document.getElementById("progress-note").value = "";
+  document.getElementById("progress-confirm").checked = false;
+  document.getElementById("progress-status").value = "in_progress";
+  document.getElementById("progress-modal").classList.remove("hidden");
+}
+function saveProgress() {
+  const task = state.tasks.find((item) => item.id === progressOfferRef?.taskId);
+  const offer = (task?.offers || []).find(
+    (item) => item.id === progressOfferRef?.offerId,
+  );
+  const note = document.getElementById("progress-note").value.trim();
+  if (currentRole !== "business" || offer?.status !== "accepted") {
+    toast("Подтвердить этап может бизнес у принятой команды", false);
+    return;
+  }
+  if (note.length < 8) {
+    toast("Опишите фактический результат этапа", false);
+    return;
+  }
+  const stage = document.getElementById("progress-stage").value;
+  const status = document.getElementById("progress-status").value;
+  if (!PROGRESS_STAGES.includes(stage) || !["in_progress", "done", "blocked"].includes(status)) return;
+  const confirmed = status === "done" && document.getElementById("progress-confirm").checked;
+  if (status === "done" && !confirmed) {
+    toast("Подтвердите, что бизнес проверил результат этапа", false);
+    return;
+  }
+  const points = confirmed && !confirmedStages(task, offer.teamId).has(stage) ? STAGE_POINTS : 0;
+  offer.progressLog = offer.progressLog || [];
+  offer.progressLog.push({
+    id: "progress-" + Date.now(),
+    stage,
+    note,
+    status,
+    confirmedBy: confirmed ? "business" : null,
+    points,
+    createdAt: Date.now(),
+  });
+  if (!persist()) {
+    offer.progressLog.pop();
+    return;
+  }
+  document.getElementById("progress-modal").classList.add("hidden");
+  renderOffers();
+  renderData();
+  toast(points ? `Этап подтверждён: команде +${points} баллов` : "Прогресс сохранён, новых баллов нет");
+}
+function renderOffers() {
+  const published = state.tasks.filter(
+    (t) => t.published && (t.offers || []).length,
+  );
+  const all = published.length
+    ? published
+    : state.tasks.filter((t) => t.published).slice(0, 2);
+  const list = document.getElementById("offers-list");
+  if (!all.length) {
+    list.innerHTML =
+      '<div class="empty-state"><div class="empty-icon">↗</div><p>Пока нет опубликованных задач.</p></div>';
+    return;
+  }
+  list.innerHTML = all
+    .map((task) => {
+      const offers = task.offers || [];
+      return `<article class="offer-task"><div class="offer-task-head"><div><p class="eyebrow">${esc(task.companyName || "Компания не указана")} · ${esc(task.industry || "Другое")} · ${task.score}/100</p><h3>${esc(task.title)}</h3></div><div class="offer-head-actions"><span class="meta-tag">${offers.length} предложений</span>${offers.length ? `<button class="secondary-btn compare-btn" data-compare-task="${esc(task.id)}">✦ Сравнить предложения</button>` : ""}</div></div><div id="comparison-${esc(task.id)}" class="offer-comparison hidden"></div>${
+        offers.length
+          ? offers
+              .map((o) => {
+                const team = state.teams.find((x) => x.id === o.teamId) || {
+                  name: "Команда",
+                };
+                const progress = (o.progressLog || []).slice(-1)[0];
+                return `<div class="offer-item"><div><span class="offer-label">Команда</span><h4>${esc(team.name)}</h4><p>${esc(team.skills || "")}</p><span class="meta-tag">${confirmedStages(task, o.teamId).size * STAGE_POINTS}/100 баллов за этапы</span></div><div><span class="offer-label">Предложение · Проверка полноты ${reviewOffer(o.idea || "", o.plan || "", o.link || "").score}/100</span><p><strong>${esc(o.idea)}</strong>\n${esc(o.plan)}${o.link ? `\n<a href="${esc(safeLink(o.link))}" target="_blank" rel="noreferrer">Открыть прототип</a>` : ""}</p>${progress ? `<div class="progress-history"><strong>Последний этап: ${esc(progress.stage)}</strong><span>${esc(progress.note)}</span></div>` : ""}</div><div class="offer-actions">${o.status === "pending" ? `<button class="accept-btn" data-decision="accepted" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Принять</button><button class="reject-btn" data-decision="rejected" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Отклонить</button>` : o.status === "accepted" ? `<span class="decision accepted">Принято</span><button class="progress-btn" data-progress-task="${esc(task.id)}" data-progress-offer="${esc(o.id)}">+ Этап</button>` : `<span class="decision rejected">Отклонено</span>`}</div></div>`;
+              })
+              .join("")
+          : '<p class="muted">Откликов пока нет. Переключитесь в режим студента и отправьте предложение из каталога.</p>'
+      }</article>`;
+    })
+    .join("");
+  list
+    .querySelectorAll("[data-decision]")
+    .forEach((btn) =>
+      btn.addEventListener("click", () =>
+        decideOffer(btn.dataset.task, btn.dataset.offer, btn.dataset.decision),
+      ),
+    );
+  list.querySelectorAll("[data-compare-task]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(
+        `comparison-${btn.dataset.compareTask}`,
+      );
+      target.classList.toggle("hidden");
+      if (!target.classList.contains("hidden"))
+        compareTaskOffers(btn.dataset.compareTask);
+    }),
+  );
+  list
+    .querySelectorAll("[data-progress-task]")
+    .forEach((btn) =>
+      btn.addEventListener("click", () =>
+        openProgress(btn.dataset.progressTask, btn.dataset.progressOffer),
+      ),
+    );
+}
+function decideOffer(taskId, offerId, status) {
+  const task = state.tasks.find((t) => t.id === taskId);
+  const offer = (task?.offers || []).find((o) => o.id === offerId);
+  if (offer && ["accepted", "rejected"].includes(status)) {
+    if (currentRole !== "business") {
+      toast("Переключитесь в режим бизнеса", false);
+      return;
+    }
+    const previousStatus = offer.status;
+    offer.status = status;
+    if (!persist()) {
+      offer.status = previousStatus;
+      return;
+    }
+    renderOffers();
+    toast(
+      status === "accepted" ? "Команда принята бизнесом" : "Отклик отклонён",
+    );
+  }
+}
+function openOffer(taskId) {
+  offerTaskId = taskId;
+  const task = state.tasks.find((t) => t.id === taskId);
+  document.getElementById("offer-modal-title").textContent =
+    `Отклик на «${task.title}»`;
+  document.getElementById("offer-modal-subtitle").textContent =
+    `Рейтинг задачи: ${task.score}/100 · отклики не ограничены`;
+  document.getElementById("offer-team").innerHTML = state.teams
+    .map(
+      (t) =>
+        `<option value="${t.id}">${esc(t.name)} · ${esc(t.skills)}</option>`,
+    )
+    .join("");
+  document.getElementById("offer-idea").value = "";
+  document.getElementById("offer-plan").value = "";
+  document.getElementById("offer-link").value = "";
+  renderTeamRecommendations(task);
+  updateOfferReview();
+  document.getElementById("offer-modal").classList.remove("hidden");
+}
+function submitOffer() {
+  const task = state.tasks.find((t) => t.id === offerTaskId);
+  const idea = document.getElementById("offer-idea").value.trim();
+  const plan = document.getElementById("offer-plan").value.trim();
+  const link = document.getElementById("offer-link").value.trim();
+  const teamId = document.getElementById("offer-team").value;
+  if (!task?.published || !state.teams.some((team) => team.id === teamId)) {
+    toast("Выберите задачу и команду", false);
+    return;
+  }
+  if (link && !safeLink(link)) {
+    toast("Ссылка должна начинаться с https:// или http://", false);
+    return;
+  }
+  if (task.offers.some((offer) => offer.teamId === teamId)) {
+    toast("Эта команда уже отправила отклик", false);
+    return;
+  }
+  const review = reviewOffer(idea, plan, link);
+  if (!review.complete) {
+    toast(`Проверка полноты: ${review.missing.join(" и ")}`, false);
+    return;
+  }
+  task.offers = task.offers || [];
+  task.offers.push({
+    id: "offer-" + Date.now(),
+    taskId: task.id,
+    teamId: document.getElementById("offer-team").value,
+    idea,
+    plan,
+    link,
+    status: "pending",
+    aiReview: {
+      score: review.score,
+      complete: review.complete,
+      reviewedAt: Date.now(),
+    },
+  });
+  if (!persist()) return;
+  document.getElementById("offer-modal").classList.add("hidden");
+  renderCatalog();
+  renderOffers();
+  toast("Отклик отправлен бизнесу");
+}
+function updateCounts() {
+  document.getElementById("catalog-count").textContent = state.tasks.filter(
+    (t) => t.published,
+  ).length;
+  document.getElementById("offers-count").textContent = state.tasks.reduce(
+    (n, t) => n + (t.offers || []).length,
+    0,
+  );
+  document.getElementById("dependent-count").textContent = (
+    state.dependentTasks || []
+  ).length;
+  document.getElementById("dependent-total").textContent = (
+    state.dependentTasks || []
+  ).length;
+}
+function goTo(view) {
+  currentView = view;
+  document
+    .querySelectorAll(".nav-btn")
+    .forEach((x) => x.classList.toggle("active", x.dataset.view === view));
+  document
+    .querySelectorAll(".view")
+    .forEach((x) => x.classList.toggle("active", x.id === "view-" + view));
+  if (view === "catalog") renderCatalog();
+  if (view === "dependent") renderDependent();
+  if (view === "offers") renderOffers();
+  if (view === "teams") renderData();
+}
+function renderData() {
+  document.getElementById("teams-data").innerHTML =
+    `<table class="data-table"><thead><tr><th>Команда</th><th>Интересы</th><th>Навыки</th><th>Технологии</th><th>Баллы за подтверждённые этапы</th></tr></thead><tbody>${state.teams.map((t) => `<tr><td><strong>${esc(t.name)}</strong></td><td>${esc(t.interests)}</td><td>${esc(t.skills)}</td><td>${esc(t.tech)}</td><td>${teamPoints(t.id)}</td></tr>`).join("")}</tbody></table>`;
+  document.getElementById("drafts-data").innerHTML =
+    `<table class="data-table"><thead><tr><th>ID</th><th>Отрасль</th><th>Черновик</th></tr></thead><tbody>${state.drafts.map((d) => `<tr><td>${esc(d.id)}</td><td>${esc(d.industry)}</td><td>${esc(d.text)}</td></tr>`).join("")}</tbody></table>`;
+  document.getElementById("cards-data").innerHTML =
+    `<table class="data-table"><thead><tr><th>Задача</th><th>Отрасль</th><th>Рейтинг</th><th>Статус</th></tr></thead><tbody>${state.tasks
+      .slice(0, 5)
+      .map(
+        (t) =>
+          `<tr><td><strong>${esc(t.title)}</strong></td><td>${esc(t.industry)}</td><td>${t.score}/100</td><td>${t.published ? "Опубликована" : "Черновик"}</td></tr>`,
+      )
+      .join("")}</tbody></table>`;
+}
+function loadDemo() {
+  analysisRequestId++;
+  setAnalysisBusy(false);
+  document.getElementById("draft-text").value =
+    "Хотим сделать сервис для нашей клиники.";
+  document.getElementById("draft-company").value = "MedLine Clinic";
+  document.getElementById("draft-industry").value = "Здравоохранение";
+  document.getElementById("draft-contact").value =
+    "Алия · business@example.com";
+  activeTaskId = null;
+  document.querySelectorAll("[data-field]").forEach((x) => (x.value = ""));
+  document.getElementById("confirm-check").checked = false;
+  document.getElementById("ai-empty").classList.remove("hidden");
+  document.getElementById("ai-result").classList.add("hidden");
+  renderScore({});
+  goTo("builder");
+  toast("Слабый пример загружен — нажмите «Проверить полноту»");
+}
+function resetDemo() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    toast("Браузер не разрешает сброс хранилища", false);
+    return;
+  }
+  state = loadState();
+  activeTaskId = null;
+  loadDemo();
+  updateCounts();
+  toast("Данные демо восстановлены");
+}
 
-      document
-        .querySelectorAll(".nav-btn")
-        .forEach((btn) =>
-          btn.addEventListener("click", () => goTo(btn.dataset.view)),
-        );
-      document.querySelectorAll(".role-btn").forEach((btn) =>
-        btn.addEventListener("click", () => {
-          currentRole = btn.dataset.role;
-          document
-            .querySelectorAll(".role-btn")
-            .forEach((x) => x.classList.toggle("active", x === btn));
-          toast(
-            currentRole === "student"
-              ? "Режим студента: выберите задачу и отправьте предложение"
-              : "Режим бизнеса: создайте и подтвердите задачу",
-          );
-        }),
+document
+  .querySelectorAll(".nav-btn")
+  .forEach((btn) =>
+    btn.addEventListener("click", () => goTo(btn.dataset.view)),
+  );
+document.querySelectorAll(".role-btn").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    currentRole = btn.dataset.role;
+    document
+      .querySelectorAll(".role-btn")
+      .forEach((x) => x.classList.toggle("active", x === btn));
+    toast(
+      currentRole === "student"
+        ? "Режим студента: выберите задачу и отправьте предложение"
+        : "Режим бизнеса: создайте и подтвердите задачу",
+    );
+  }),
+);
+document.getElementById("analyze-btn").addEventListener("click", aiAnalyze);
+document.getElementById("load-sample-btn").addEventListener("click", loadDemo);
+document.getElementById("publish-btn").addEventListener("click", publish);
+document.getElementById("save-draft-btn").addEventListener("click", saveDraft);
+document.getElementById("confirm-check").addEventListener("change", () => {
+  const task = readCardFields();
+  renderScore(task);
+});
+document
+  .getElementById("catalog-search")
+  .addEventListener("input", renderCatalog);
+document
+  .getElementById("catalog-level")
+  .addEventListener("change", renderCatalog);
+document
+  .getElementById("catalog-industry")
+  .addEventListener("change", renderCatalog);
+document
+  .getElementById("catalog-sort")
+  .addEventListener("change", renderCatalog);
+document
+  .getElementById("modal-close")
+  .addEventListener("click", () =>
+    document.getElementById("offer-modal").classList.add("hidden"),
+  );
+document
+  .getElementById("submit-offer-btn")
+  .addEventListener("click", submitOffer);
+["offer-idea", "offer-plan", "offer-link"].forEach((id) =>
+  document.getElementById(id).addEventListener("input", updateOfferReview),
+);
+document
+  .getElementById("progress-modal-close")
+  .addEventListener("click", () =>
+    document.getElementById("progress-modal").classList.add("hidden"),
+  );
+document
+  .getElementById("save-progress-btn")
+  .addEventListener("click", saveProgress);
+document.getElementById("demo-reset-btn").addEventListener("click", resetDemo);
+document
+  .getElementById("dependent-modal-close")
+  .addEventListener("click", () => {
+    dependentRequestId++;
+    setDependentBusy(false);
+    document.getElementById("dependent-modal").classList.add("hidden");
+  });
+document
+  .getElementById("dependent-generate-btn")
+  .addEventListener("click", generateDependentAgent);
+document
+  .getElementById("dependent-regenerate-btn")
+  .addEventListener("click", generateDependentAgent);
+document
+  .getElementById("save-dependent-btn")
+  .addEventListener("click", saveDependentTask);
+document.querySelectorAll(".data-tab").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll(".data-tab")
+      .forEach((x) => x.classList.toggle("active", x === btn));
+    document
+      .querySelectorAll(".data-view")
+      .forEach((x) =>
+        x.classList.toggle("active", x.id === btn.dataset.dataView),
       );
-      document
-        .getElementById("analyze-btn")
-        .addEventListener("click", aiAnalyze);
-      document
-        .getElementById("load-sample-btn")
-        .addEventListener("click", loadDemo);
-      document.getElementById("publish-btn").addEventListener("click", publish);
-      document
-        .getElementById("save-draft-btn")
-        .addEventListener("click", saveDraft);
-      document
-        .getElementById("confirm-check")
-        .addEventListener("change", () => {
-          const task = readCardFields();
-          renderScore(task);
-        });
-      document
-        .getElementById("catalog-search")
-        .addEventListener("input", renderCatalog);
-      document
-        .getElementById("catalog-level")
-        .addEventListener("change", renderCatalog);
-      document
-        .getElementById("catalog-sort")
-        .addEventListener("change", renderCatalog);
-      document
-        .getElementById("modal-close")
-        .addEventListener("click", () =>
-          document.getElementById("offer-modal").classList.add("hidden"),
-        );
-      document
-        .getElementById("submit-offer-btn")
-        .addEventListener("click", submitOffer);
-      ["offer-idea", "offer-plan", "offer-link"].forEach((id) =>
-        document
-          .getElementById(id)
-          .addEventListener("input", updateOfferReview),
-      );
-      document
-        .getElementById("progress-modal-close")
-        .addEventListener("click", () =>
-          document.getElementById("progress-modal").classList.add("hidden"),
-        );
-      document
-        .getElementById("save-progress-btn")
-        .addEventListener("click", saveProgress);
-      document
-        .getElementById("demo-reset-btn")
-        .addEventListener("click", resetDemo);
-      document
-        .getElementById("dependent-modal-close")
-        .addEventListener("click", () =>
-          document.getElementById("dependent-modal").classList.add("hidden"),
-        );
-      document
-        .getElementById("dependent-generate-btn")
-        .addEventListener("click", generateDependentAgent);
-      document
-        .getElementById("dependent-regenerate-btn")
-        .addEventListener("click", generateDependentAgent);
-      document
-        .getElementById("save-dependent-btn")
-        .addEventListener("click", saveDependentTask);
-      document.querySelectorAll(".data-tab").forEach((btn) =>
-        btn.addEventListener("click", () => {
-          document
-            .querySelectorAll(".data-tab")
-            .forEach((x) => x.classList.toggle("active", x === btn));
-          document
-            .querySelectorAll(".data-view")
-            .forEach((x) =>
-              x.classList.toggle("active", x.id === btn.dataset.dataView),
-            );
-        }),
-      );
-      ["company", "contact"].forEach((key) =>
-        document
-          .getElementById("draft-" + key)
-          .addEventListener("input", () => {
-            document.querySelector(
-              '[data-field="' +
-                (key === "company" ? "companyName" : key) +
-                '"]',
-            ).value = document.getElementById("draft-" + key).value;
-            document.getElementById("confirm-check").checked = false;
-            renderScore(readCardFields());
-          }),
-      );
-      document.querySelectorAll("[data-field]").forEach((el) =>
-        el.addEventListener("input", () => {
-          document.getElementById("confirm-check").checked = false;
-          renderScore(readCardFields());
-        }),
-      );
-      updateCounts();
-      renderCatalog();
-      renderDependent();
-      renderOffers();
-      renderData();
-      if (getTask()) setCardFields(getTask());
-      else renderScore({});
-    </script>
+  }),
+);
+["company", "contact"].forEach((key) =>
+  document.getElementById("draft-" + key).addEventListener("input", () => {
+    const target = document.querySelector(
+      '[data-field="' + (key === "company" ? "companyName" : key) + '"]',
+    );
+    if (target) target.value = document.getElementById("draft-" + key).value;
+    document.getElementById("confirm-check").checked = false;
+    renderScore(readCardFields());
+  }),
+);
+document.querySelectorAll("[data-field]").forEach((el) =>
+  el.addEventListener("input", () => {
+    document.getElementById("confirm-check").checked = false;
+    renderScore(readCardFields());
+  }),
+);
+updateCounts();
+renderCatalog();
+renderDependent();
+renderOffers();
+renderData();
+if (getTask()) setCardFields(getTask());
+else renderScore({});
+</script>
   </body>
 </html>

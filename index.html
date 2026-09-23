@@ -293,7 +293,16 @@ ERROR: при недоступности API или некорректном JSO
                   placeholder="Поиск по задачам, отрасли, пользователям..."
                 />
               </div>
-              <select id="catalog-level">
+              <select id="catalog-industry" aria-label="Отрасль задачи">
+                <option value="all">Все отрасли</option>
+                <option>Здравоохранение</option>
+                <option>Образование</option>
+                <option>Ритейл</option>
+                <option>Финансы</option>
+                <option>Логистика</option>
+                <option>Другое</option>
+              </select>
+              <select id="catalog-level" aria-label="Уровень готовности">
                 <option value="all">Все уровни готовности</option>
                 <option value="draft">Черновик · 0–39</option>
                 <option value="working">Рабочая · 40–69</option>
@@ -332,7 +341,7 @@ ERROR: при недоступности API или некорректном JSO
                   исполнителя и не публикует карточку автоматически.
                 </p>
               </div>
-              <span class="ai-badge">LOCAL AI</span>
+              <span class="ai-badge">LLM / fallback</span>
             </div>
             <div id="dependent-list" class="dependent-grid"></div>
           </section>
@@ -503,7 +512,7 @@ ERROR: при недоступности API или некорректном JSO
     <div class="modal hidden" id="progress-modal">
       <div class="modal-card">
         <button class="modal-close" id="progress-modal-close">×</button>
-        <p class="eyebrow">AI PROGRESS LOG</p>
+        <p class="eyebrow">ПРОГРЕСС КОМАНДЫ</p>
         <h2>Зафиксировать фактический прогресс</h2>
         <p id="progress-modal-subtitle" class="muted"></p>
         <label class="card-field"
@@ -529,7 +538,12 @@ ERROR: при недоступности API или некорректном JSO
             <option value="done">Этап завершён</option>
             <option value="blocked">Есть блокер</option>
           </select></label
-        ><button class="primary-btn full" id="save-progress-btn">
+        >
+        <label class="confirm-check"><input type="checkbox" id="progress-confirm" />
+          Бизнес проверил результат и подтверждает завершение этапа
+        </label>
+        <p class="muted">За подтверждённый этап — 20 баллов. За каждый из пяти этапов баллы начисляются один раз на команду и задачу.</p>
+        <button class="primary-btn full" id="save-progress-btn">
           Сохранить прогресс
         </button>
       </div>

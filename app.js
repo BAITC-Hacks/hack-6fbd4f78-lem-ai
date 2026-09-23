@@ -1,4 +1,6 @@
 const STORAGE_KEY = "ai-sana-mvp-v1";
+const PROGRESS_STAGES = ["Исследование", "Прототип", "Разработка", "Тестирование", "Финальная передача"];
+const STAGE_POINTS = 20;
 const WEIGHTS = {
   contextNeed: 20,
   data: 20,
@@ -229,6 +231,11 @@ let activeTaskId = state.activeTaskId || null;
 let offerTaskId = null;
 let dependentParentTaskId = null;
 let progressOfferRef = null;
+let dependentRequestId = 0;
+let dependentBusy = false;
+let dependentSource = null;
+let analysisRequestId = 0;
+let analysisBusy = false;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -253,6 +260,7 @@ function validateAnalysis(raw, missing, questions) {
       value.missingFields.length !== missing.length ||
       !missing.every((key) => value.missingFields.includes(key)) ||
       value.questions.length !== questions.length ||
+      new Set(value.questions.map((q) => q?.field)).size !== missing.length ||
       !value.questions.every(
         (q) =>
           q &&
@@ -304,31 +312,37 @@ function requestLLM(route, payload) {
     window.location.protocol !== "file:"
       ? window.location.origin
       : "";
-  const urls = [
-    `${pageOrigin}${route}`,
-    `http://localhost:8000${route}`,
-  ].filter((url, index, all) => url && all.indexOf(url) === index);
-  const attempt = (index) =>
-    fetch(urls[index], {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-      .then((response) =>
-        response
-          .json()
-          .catch(() => ({ error: `HTTP ${response.status}` }))
-          .then((value) => {
-            if (response.ok) return value;
-            if (index + 1 < urls.length) return attempt(index + 1);
-            throw new Error(value.error || "LLM API error");
-          }),
-      )
-      .catch((error) => {
-        if (index + 1 < urls.length) return attempt(index + 1);
-        throw error;
-      });
-  return attempt(0);
+  const urls = pageOrigin ? [`${pageOrigin}${route}`] : [];
+  if (!/^http:\/\/(localhost|127\.0\.0\.1):8000$/.test(pageOrigin)) {
+    urls.push(`http://localhost:8000${route}`);
+  }
+  return (async () => {
+    for (let index = 0; index < urls.length; index++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 100000);
+      try {
+        let response;
+        try {
+          response = await fetch(urls[index], {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          });
+        } catch (error) {
+          if (error.name !== "AbortError" && index + 1 < urls.length) continue;
+          throw error;
+        }
+        // Live Server has no API. Retry only at the proxy, never repeat a model error.
+        if ([404, 405].includes(response.status) && index + 1 < urls.length) continue;
+        const value = await response.json();
+        if (!response.ok) throw new Error(value.error || "LLM API error");
+        return value;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+  })();
 }
 function loadState() {
   try {
@@ -440,7 +454,7 @@ function setCardFields(task) {
   document.getElementById("draft-company").value =
     task.companyName || document.getElementById("draft-company").value;
   document.getElementById("draft-contact").value =
-    task.contact || document.getElementById("draft-contact").value;
+    task.contact || "";
   document.getElementById("draft-industry").value = task.industry || "Другое";
   renderScore(task);
 }
@@ -454,6 +468,7 @@ function readCardFields() {
   document
     .querySelectorAll("[data-field]")
     .forEach((el) => (task[el.dataset.field] = el.value.trim()));
+  task.contact = document.getElementById("draft-contact").value.trim();
   task.industry = document.getElementById("draft-industry").value;
   const calc = calculateScore(task);
   Object.assign(task, calc);
@@ -532,26 +547,37 @@ function renderAnalysis(task, calc, rawAnalysis, source) {
   document.getElementById("ai-empty").classList.add("hidden");
   ai.classList.remove("hidden");
   ai.innerHTML = `<div class="ai-summary"><span>✦</span><span><strong>${analysis.fallback ? (source === "api" ? "Ответ API не прошёл проверку: включён локальный fallback." : "Некорректный AI-ответ: включён локальный fallback.") : source === "api" ? "Вопросы подготовлены LLM API." : "Локальный анализ завершён."}</strong> Факты не добавлялись. Найдено пробелов: ${calc.missing.length}. Ответы ниже попадут только в редактируемую карточку.</span></div><div class="question-list">${questions.length ? questions.map((q, i) => `<div class="question-item"><strong>${i + 1}. ${esc(q.text)}</strong><input data-question-field="${esc(q.field)}" placeholder="Ваш ответ (необязательно сейчас)" /></div>`).join("") : '<div class="ai-summary">Карточка заполнена. Проверьте данные и подтвердите публикацию.</div>'}</div>`;
-  ai.querySelectorAll("[data-question-field]").forEach((input) =>
-    input.addEventListener("change", () => {
+  const originalContext = task.contextNeed;
+  ai.querySelectorAll("[data-question-field]").forEach((input) => {
+    const applyAnswer = () => {
       const field = input.dataset.questionField;
       const value = input.value.trim();
       if (value) {
         task = readCardFields();
         task[field === "businessLink" ? "format" : field] =
-          field === "contextNeed" && task[field]
-            ? task[field] + " " + value
+          field === "contextNeed" && originalContext
+            ? originalContext + " " + value
             : value;
+        document.getElementById("confirm-check").checked = false;
         setCardFields(task);
       }
-    }),
-  );
+    };
+    input.addEventListener("input", applyAnswer);
+    input.addEventListener("change", applyAnswer);
+  });
   document.getElementById("confirm-check").checked = false;
   renderScore(task);
   if (storeCard(task))
     toast("Анализ готов: проверьте и отредактируйте карточку");
 }
+function setAnalysisBusy(busy) {
+  analysisBusy = busy;
+  const button = document.getElementById("analyze-btn");
+  button.disabled = busy;
+  button.textContent = busy ? "✦ Готовлю уточняющие вопросы…" : "✦ Проверить полноту и создать карточку";
+}
 function aiAnalyze() {
+  if (analysisBusy) return;
   const draft = document.getElementById("draft-text").value.trim();
   if (!draft) {
     toast("Сначала введите описание задачи", false);
@@ -569,6 +595,7 @@ function aiAnalyze() {
   setCardFields(task);
   const localQuestions = calc.missing.map((k) => ({ field: k, text: "" }));
   const simulate = document.getElementById("simulate-ai-error");
+  const requestId = ++analysisRequestId;
   const remote =
     typeof fetch === "function"
       ? simulate?.checked
@@ -580,15 +607,18 @@ function aiAnalyze() {
           })
       : null;
   if (remote && typeof remote.then === "function") {
+    setAnalysisBusy(true);
     document.getElementById("ai-empty").classList.add("hidden");
     document.getElementById("ai-result").classList.remove("hidden");
     document.getElementById("ai-result").innerHTML =
       '<div class="ai-summary"><span>✦</span><span><strong>Запрашиваю уточнения у LLM API…</strong> Ключ и запрос остаются на сервере.</span></div>';
     remote
-      .then((value) => renderAnalysis(task, calc, value, "api"))
-      .catch(() =>
-        renderAnalysis(
-          task,
+      .then((value) => {
+        if (requestId === analysisRequestId) renderAnalysis(readCardFields(), calc, value, "api");
+      })
+      .catch(() => {
+        if (requestId === analysisRequestId) renderAnalysis(
+          readCardFields(),
           calc,
           {
             missingFields: calc.missing,
@@ -596,8 +626,11 @@ function aiAnalyze() {
             suggestions: [],
           },
           "fallback",
-        ),
-      );
+        );
+      })
+      .finally(() => {
+        if (requestId === analysisRequestId) setAnalysisBusy(false);
+      });
     return;
   }
   renderAnalysis(
@@ -650,6 +683,10 @@ function dependentFallback(parent, role, focus) {
 function openDependentAgent(taskId) {
   const parent = state.tasks.find((t) => t.id === taskId);
   if (!parent) return;
+  dependentRequestId++;
+  setDependentBusy(false);
+  dependentSource = null;
+  fillDependentFields({});
   dependentParentTaskId = taskId;
   document.getElementById("dependent-parent-context").innerHTML =
     `<span class="parent-label">РОДИТЕЛЬСКАЯ ЗАДАЧА</span><strong>${esc(parent.title || "Без названия")}</strong><p>${esc((parent.contextNeed || "Описание не добавлено").slice(0, 220))}</p><span class="parent-score">${parent.score || 0}/100 · ${esc(parent.industry || "Другое")}</span>`;
@@ -667,7 +704,18 @@ function fillDependentFields(task) {
     .querySelectorAll("[data-dependent-field]")
     .forEach((el) => (el.value = task[el.dataset.dependentField] || ""));
 }
+function setDependentBusy(busy) {
+  dependentBusy = busy;
+  ["dependent-generate-btn", "dependent-regenerate-btn", "save-dependent-btn", "dependent-role", "dependent-focus"].forEach((id) => {
+    document.getElementById(id).disabled = busy;
+  });
+  document.querySelectorAll("[data-dependent-field]").forEach((el) => (el.disabled = busy));
+  document.getElementById("dependent-generate-btn").textContent = busy
+    ? "✦ Готовлю карточку…"
+    : "✦ Сгенерировать карточку агентом";
+}
 function generateDependentAgent() {
+  if (dependentBusy) return;
   const parent = state.tasks.find((t) => t.id === dependentParentTaskId);
   const focus = document.getElementById("dependent-focus").value.trim();
   const role = document.getElementById("dependent-role").value;
@@ -676,6 +724,9 @@ function generateDependentAgent() {
     return;
   }
   const local = dependentFallback(parent, role, focus);
+  const requestId = ++dependentRequestId;
+  dependentSource = null;
+  fillDependentFields({});
   const remote = requestLLM("/api/llm/decompose", {
     parent_task_title: parent.title,
     parent_task_description: {
@@ -690,6 +741,7 @@ function generateDependentAgent() {
     focus,
   });
   if (remote && typeof remote.then === "function") {
+    setDependentBusy(true);
     document.getElementById("dependent-agent-empty").classList.add("hidden");
     document
       .getElementById("dependent-agent-result")
@@ -700,7 +752,9 @@ function generateDependentAgent() {
       "<strong>Запрашиваю карточку у LLM API…</strong> Ответ будет проверен по строгой JSON-схеме.";
     remote
       .then((value) => {
+        if (requestId !== dependentRequestId) return;
         const result = validateDependentOutput(value);
+        dependentSource = result ? "llm-api" : "local-fallback";
         fillDependentFields(result || local);
         document
           .getElementById("dependent-agent-result")
@@ -712,21 +766,30 @@ function generateDependentAgent() {
         );
       })
       .catch(() => {
+        if (requestId !== dependentRequestId) return;
+        dependentSource = "local-fallback";
         fillDependentFields(local);
         document
           .getElementById("dependent-agent-result")
           .querySelector(".agent-result-note").innerHTML =
           "<strong>LLM API недоступен.</strong> Запустите server.py или server.js и проверьте .env. Использован локальный fallback.";
         toast("LLM API недоступен: запустите server.py", false);
+      })
+      .finally(() => {
+        if (requestId === dependentRequestId) setDependentBusy(false);
       });
     return;
   }
   fillDependentFields(local);
+  dependentSource = "local-fallback";
   document.getElementById("dependent-agent-empty").classList.add("hidden");
   document.getElementById("dependent-agent-result").classList.remove("hidden");
+  document.getElementById("dependent-agent-result").querySelector(".agent-result-note").textContent =
+    "Черновик подготовлен локально. Проверьте поля перед сохранением.";
   toast("Локальный fallback подготовил черновик");
 }
 function saveDependentTask() {
+  if (dependentBusy || !dependentSource) return;
   const parent = state.tasks.find((t) => t.id === dependentParentTaskId);
   const task = {
     id: "dependent-" + Date.now(),
@@ -735,19 +798,23 @@ function saveDependentTask() {
     role: document.getElementById("dependent-role").value,
     focus: document.getElementById("dependent-focus").value.trim(),
     status: "draft",
-    source: "llm-api-or-local-fallback",
+    source: dependentSource,
     createdAt: Date.now(),
   };
   document
     .querySelectorAll("[data-dependent-field]")
     .forEach((el) => (task[el.dataset.dependentField] = el.value.trim()));
-  if (!task.title) {
-    toast("Добавьте название зависимого задания", false);
+  const fields = ["title", "goal", "input_data", "expected_artifact", "acceptance_criteria", "constraints"];
+  if (!parent || fields.some((key) => !task[key])) {
+    toast("Проверьте и заполните все поля зависимого задания", false);
     return;
   }
   state.dependentTasks = state.dependentTasks || [];
   state.dependentTasks.unshift(task);
-  persist();
+  if (!persist()) {
+    state.dependentTasks.shift();
+    return;
+  }
   document.getElementById("dependent-modal").classList.add("hidden");
   renderDependent();
   goTo("dependent");
@@ -765,7 +832,7 @@ function renderDependent() {
   list.innerHTML = tasks
     .map(
       (task) =>
-        `<article class="dependent-card"><div class="dependent-card-head"><div><span class="dependent-status">Черновик</span><h3>${esc(task.title)}</h3><p>Родитель: <strong>${esc(task.parentTitle)}</strong></p></div><span class="role-pill">${esc(task.role || "Роль не указана")}</span></div><div class="dependent-card-grid"><div><span>Цель</span><p>${esc(task.goal || task.objective || "—")}</p></div><div><span>Ожидаемый артефакт</span><p>${esc(task.expected_artifact || task.deliverable || "—")}</p></div><div><span>Критерии приёмки</span><p>${esc(task.acceptance_criteria || task.acceptanceCriteria || "—")}</p></div><div><span>Ограничения</span><p>${esc(task.constraints || "—")}</p></div></div></article>`,
+        `<article class="dependent-card"><div class="dependent-card-head"><div><span class="dependent-status">Черновик · ${task.source === "llm-api" ? "LLM API" : task.source === "local-fallback" ? "Локальный fallback" : "Источник не сохранён"}</span><h3>${esc(task.title)}</h3><p>Родитель: <strong>${esc(task.parentTitle)}</strong></p></div><span class="role-pill">${esc(task.role || "Роль не указана")}</span></div><div class="dependent-card-grid"><div><span>Цель</span><p>${esc(task.goal || task.objective || "—")}</p></div><div><span>Входные данные</span><p>${esc(task.input_data || "—")}</p></div><div><span>Ожидаемый артефакт</span><p>${esc(task.expected_artifact || task.deliverable || "—")}</p></div><div><span>Критерии приёмки</span><p>${esc(task.acceptance_criteria || task.acceptanceCriteria || "—")}</p></div><div><span>Ограничения</span><p>${esc(task.constraints || "—")}</p></div></div></article>`,
     )
     .join("");
 }
@@ -774,6 +841,7 @@ function renderCatalog() {
     .trim()
     .toLowerCase();
   const level = document.getElementById("catalog-level")?.value || "all";
+  const industry = document.getElementById("catalog-industry")?.value || "all";
   const sort = document.getElementById("catalog-sort")?.value || "rating";
   let tasks = state.tasks
     .filter((t) => t.published)
@@ -788,6 +856,7 @@ function renderCatalog() {
   tasks = tasks.filter(
     (t) => level === "all" || readiness(t.score)[0] === level,
   );
+  tasks = tasks.filter((t) => industry === "all" || t.industry === industry);
   tasks.sort((a, b) =>
     sort === "new"
       ? (b.publishedAt || 0) - (a.publishedAt || 0)
@@ -865,7 +934,7 @@ function renderTeamRecommendations(task) {
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
   document.getElementById("team-recommendations").innerHTML =
-    `<div class="recommendations-head"><strong>AI-рекомендации студенту</strong><span>объяснимое совпадение</span></div>${ranked.map((item, index) => `<div class="recommendation-item"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(item.team.name)}</strong><p>${esc(item.reason)} ${item.overlap.length ? `Общие признаки: ${esc(item.overlap.slice(0, 3).join(", "))}.` : ""}</p></div><b>${item.score}/100</b></div>`).join("")}`;
+    `<div class="recommendations-head"><strong>Рекомендации по навыкам</strong><span>объяснимое совпадение</span></div>${ranked.map((item, index) => `<div class="recommendation-item"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(item.team.name)}</strong><p>${esc(item.reason)} ${item.overlap.length ? `Общие признаки: ${esc(item.overlap.slice(0, 3).join(", "))}.` : ""}</p></div><b>${item.score}/100</b></div>`).join("")}`;
 }
 function reviewOffer(idea, plan, link) {
   const missing = [];
@@ -888,8 +957,8 @@ function updateOfferReview() {
   const el = document.getElementById("offer-ai-review");
   el.className = `offer-ai-review ${review.complete ? "complete" : "incomplete"}`;
   el.innerHTML = review.complete
-    ? `<strong>AI-проверка: отклик выглядит полным · ${review.score}/100</strong><span>${review.hasLink ? "Ссылка на прототип добавлена." : "Ссылка на прототип необязательна, но усилит предложение."}</span>`
-    : `<strong>AI-проверка: нужно уточнить</strong><span>${review.missing.join(" и ")}.</span>`;
+    ? `<strong>Проверка полноты: отклик выглядит полным · ${review.score}/100</strong><span>${review.hasLink ? "Ссылка на прототип добавлена." : "Ссылка на прототип необязательна, но усилит предложение."}</span>`
+    : `<strong>Проверка полноты: нужно уточнить</strong><span>${review.missing.join(" и ")}.</span>`;
 }
 function compareTaskOffers(taskId) {
   const task = state.tasks.find((item) => item.id === taskId);
@@ -920,17 +989,32 @@ function compareTaskOffers(taskId) {
       '<p class="muted">Для сравнения нужны отклики команд.</p>';
     return;
   }
-  target.innerHTML = `<div class="comparison-title"><strong>AI-сравнение предложений</strong><span>Итог не заменяет решение бизнеса</span></div>${rows.map((row, index) => `<div class="comparison-row"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(row.team.name)}</strong><p>${row.review.complete ? "Полнота отклика достаточная" : "Нужно уточнить: " + esc(row.review.missing.join(", "))}. Совпадение с задачей: ${row.match.score}/100.</p></div><b>${Math.round((row.review.score + row.match.score) / 2)}/100</b></div>`).join("")}`;
+  target.innerHTML = `<div class="comparison-title"><strong>Сравнение предложений</strong><span>Итог не заменяет решение бизнеса</span></div>${rows.map((row, index) => `<div class="comparison-row"><span class="recommendation-rank">${index + 1}</span><div><strong>${esc(row.team.name)}</strong><p>${row.review.complete ? "Полнота отклика достаточная" : "Нужно уточнить: " + esc(row.review.missing.join(", "))}. Совпадение с задачей: ${row.match.score}/100.</p></div><b>${Math.round((row.review.score + row.match.score) / 2)}/100</b></div>`).join("")}`;
+}
+function confirmedStages(task, teamId) {
+  return new Set((task.offers || [])
+    .filter((offer) => offer.teamId === teamId)
+    .flatMap((offer) => offer.progressLog || [])
+    .filter((entry) => entry.status === "done" && entry.confirmedBy === "business" && PROGRESS_STAGES.includes(entry.stage))
+    .map((entry) => entry.stage));
+}
+function teamPoints(teamId) {
+  return state.tasks.reduce((sum, task) => sum + confirmedStages(task, teamId).size * STAGE_POINTS, 0);
 }
 function openProgress(taskId, offerId) {
   const task = state.tasks.find((item) => item.id === taskId);
   const offer = (task?.offers || []).find((item) => item.id === offerId);
   const team = state.teams.find((item) => item.id === offer?.teamId);
-  if (!task || !offer) return;
+  if (!task || !offer || offer.status !== "accepted" || currentRole !== "business") {
+    toast("Подтвердить этап может бизнес у принятой команды", false);
+    return;
+  }
   progressOfferRef = { taskId, offerId };
   document.getElementById("progress-modal-subtitle").textContent =
     `${team?.name || "Команда"} · ${task.title}`;
   document.getElementById("progress-note").value = "";
+  document.getElementById("progress-confirm").checked = false;
+  document.getElementById("progress-status").value = "in_progress";
   document.getElementById("progress-modal").classList.remove("hidden");
 }
 function saveProgress() {
@@ -939,22 +1023,41 @@ function saveProgress() {
     (item) => item.id === progressOfferRef?.offerId,
   );
   const note = document.getElementById("progress-note").value.trim();
-  if (!offer || note.length < 8) {
+  if (currentRole !== "business" || offer?.status !== "accepted") {
+    toast("Подтвердить этап может бизнес у принятой команды", false);
+    return;
+  }
+  if (note.length < 8) {
     toast("Опишите фактический результат этапа", false);
     return;
   }
+  const stage = document.getElementById("progress-stage").value;
+  const status = document.getElementById("progress-status").value;
+  if (!PROGRESS_STAGES.includes(stage) || !["in_progress", "done", "blocked"].includes(status)) return;
+  const confirmed = status === "done" && document.getElementById("progress-confirm").checked;
+  if (status === "done" && !confirmed) {
+    toast("Подтвердите, что бизнес проверил результат этапа", false);
+    return;
+  }
+  const points = confirmed && !confirmedStages(task, offer.teamId).has(stage) ? STAGE_POINTS : 0;
   offer.progressLog = offer.progressLog || [];
   offer.progressLog.push({
     id: "progress-" + Date.now(),
-    stage: document.getElementById("progress-stage").value,
+    stage,
     note,
-    status: document.getElementById("progress-status").value,
+    status,
+    confirmedBy: confirmed ? "business" : null,
+    points,
     createdAt: Date.now(),
   });
-  persist();
+  if (!persist()) {
+    offer.progressLog.pop();
+    return;
+  }
   document.getElementById("progress-modal").classList.add("hidden");
   renderOffers();
-  toast("Фактический прогресс зафиксирован");
+  renderData();
+  toast(points ? `Этап подтверждён: команде +${points} баллов` : "Прогресс сохранён, новых баллов нет");
 }
 function renderOffers() {
   const published = state.tasks.filter(
@@ -980,7 +1083,7 @@ function renderOffers() {
                   name: "Команда",
                 };
                 const progress = (o.progressLog || []).slice(-1)[0];
-                return `<div class="offer-item"><div><span class="offer-label">Команда</span><h4>${esc(team.name)}</h4><p>${esc(team.skills || "")}</p></div><div><span class="offer-label">Предложение · AI-проверка ${reviewOffer(o.idea || "", o.plan || "", o.link || "").score}/100</span><p><strong>${esc(o.idea)}</strong>\n${esc(o.plan)}${o.link ? `\n<a href="${esc(safeLink(o.link))}" target="_blank" rel="noreferrer">Открыть прототип</a>` : ""}</p>${progress ? `<div class="progress-history"><strong>Последний этап: ${esc(progress.stage)}</strong><span>${esc(progress.note)}</span></div>` : ""}</div><div class="offer-actions">${o.status === "pending" ? `<button class="accept-btn" data-decision="accepted" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Принять</button><button class="reject-btn" data-decision="rejected" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Отклонить</button>` : o.status === "accepted" ? `<span class="decision accepted">Принято</span><button class="progress-btn" data-progress-task="${esc(task.id)}" data-progress-offer="${esc(o.id)}">+ Этап</button>` : `<span class="decision rejected">Отклонено</span>`}</div></div>`;
+                return `<div class="offer-item"><div><span class="offer-label">Команда</span><h4>${esc(team.name)}</h4><p>${esc(team.skills || "")}</p><span class="meta-tag">${confirmedStages(task, o.teamId).size * STAGE_POINTS}/100 баллов за этапы</span></div><div><span class="offer-label">Предложение · Проверка полноты ${reviewOffer(o.idea || "", o.plan || "", o.link || "").score}/100</span><p><strong>${esc(o.idea)}</strong>\n${esc(o.plan)}${o.link ? `\n<a href="${esc(safeLink(o.link))}" target="_blank" rel="noreferrer">Открыть прототип</a>` : ""}</p>${progress ? `<div class="progress-history"><strong>Последний этап: ${esc(progress.stage)}</strong><span>${esc(progress.note)}</span></div>` : ""}</div><div class="offer-actions">${o.status === "pending" ? `<button class="accept-btn" data-decision="accepted" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Принять</button><button class="reject-btn" data-decision="rejected" data-task="${esc(task.id)}" data-offer="${esc(o.id)}">Отклонить</button>` : o.status === "accepted" ? `<span class="decision accepted">Принято</span><button class="progress-btn" data-progress-task="${esc(task.id)}" data-progress-offer="${esc(o.id)}">+ Этап</button>` : `<span class="decision rejected">Отклонено</span>`}</div></div>`;
               })
               .join("")
           : '<p class="muted">Откликов пока нет. Переключитесь в режим студента и отправьте предложение из каталога.</p>'
@@ -1020,17 +1123,12 @@ function decideOffer(taskId, offerId, status) {
       toast("Переключитесь в режим бизнеса", false);
       return;
     }
-    if (
-      status === "accepted" &&
-      task.offers.some(
-        (item) => item.id !== offerId && item.status === "accepted",
-      )
-    ) {
-      toast("Для этой задачи уже выбрана команда", false);
+    const previousStatus = offer.status;
+    offer.status = status;
+    if (!persist()) {
+      offer.status = previousStatus;
       return;
     }
-    offer.status = status;
-    if (!persist()) return;
     renderOffers();
     toast(
       status === "accepted" ? "Команда принята бизнесом" : "Отклик отклонён",
@@ -1077,7 +1175,7 @@ function submitOffer() {
   }
   const review = reviewOffer(idea, plan, link);
   if (!review.complete) {
-    toast(`AI-проверка: ${review.missing.join(" и ")}`, false);
+    toast(`Проверка полноты: ${review.missing.join(" и ")}`, false);
     return;
   }
   task.offers = task.offers || [];
@@ -1099,7 +1197,7 @@ function submitOffer() {
   document.getElementById("offer-modal").classList.add("hidden");
   renderCatalog();
   renderOffers();
-  toast("Отклик проверен AI и отправлен бизнесу");
+  toast("Отклик отправлен бизнесу");
 }
 function updateCounts() {
   document.getElementById("catalog-count").textContent = state.tasks.filter(
@@ -1131,7 +1229,7 @@ function goTo(view) {
 }
 function renderData() {
   document.getElementById("teams-data").innerHTML =
-    `<table class="data-table"><thead><tr><th>Команда</th><th>Интересы</th><th>Навыки</th><th>Технологии</th></tr></thead><tbody>${state.teams.map((t) => `<tr><td><strong>${esc(t.name)}</strong></td><td>${esc(t.interests)}</td><td>${esc(t.skills)}</td><td>${esc(t.tech)}</td></tr>`).join("")}</tbody></table>`;
+    `<table class="data-table"><thead><tr><th>Команда</th><th>Интересы</th><th>Навыки</th><th>Технологии</th><th>Баллы за подтверждённые этапы</th></tr></thead><tbody>${state.teams.map((t) => `<tr><td><strong>${esc(t.name)}</strong></td><td>${esc(t.interests)}</td><td>${esc(t.skills)}</td><td>${esc(t.tech)}</td><td>${teamPoints(t.id)}</td></tr>`).join("")}</tbody></table>`;
   document.getElementById("drafts-data").innerHTML =
     `<table class="data-table"><thead><tr><th>ID</th><th>Отрасль</th><th>Черновик</th></tr></thead><tbody>${state.drafts.map((d) => `<tr><td>${esc(d.id)}</td><td>${esc(d.industry)}</td><td>${esc(d.text)}</td></tr>`).join("")}</tbody></table>`;
   document.getElementById("cards-data").innerHTML =
@@ -1144,6 +1242,8 @@ function renderData() {
       .join("")}</tbody></table>`;
 }
 function loadDemo() {
+  analysisRequestId++;
+  setAnalysisBusy(false);
   document.getElementById("draft-text").value =
     "Хотим сделать сервис для нашей клиники.";
   document.getElementById("draft-company").value = "MedLine Clinic";
@@ -1206,6 +1306,9 @@ document
   .getElementById("catalog-level")
   .addEventListener("change", renderCatalog);
 document
+  .getElementById("catalog-industry")
+  .addEventListener("change", renderCatalog);
+document
   .getElementById("catalog-sort")
   .addEventListener("change", renderCatalog);
 document
@@ -1230,9 +1333,11 @@ document
 document.getElementById("demo-reset-btn").addEventListener("click", resetDemo);
 document
   .getElementById("dependent-modal-close")
-  .addEventListener("click", () =>
-    document.getElementById("dependent-modal").classList.add("hidden"),
-  );
+  .addEventListener("click", () => {
+    dependentRequestId++;
+    setDependentBusy(false);
+    document.getElementById("dependent-modal").classList.add("hidden");
+  });
 document
   .getElementById("dependent-generate-btn")
   .addEventListener("click", generateDependentAgent);
@@ -1256,9 +1361,10 @@ document.querySelectorAll(".data-tab").forEach((btn) =>
 );
 ["company", "contact"].forEach((key) =>
   document.getElementById("draft-" + key).addEventListener("input", () => {
-    document.querySelector(
+    const target = document.querySelector(
       '[data-field="' + (key === "company" ? "companyName" : key) + '"]',
-    ).value = document.getElementById("draft-" + key).value;
+    );
+    if (target) target.value = document.getElementById("draft-" + key).value;
     document.getElementById("confirm-check").checked = false;
     renderScore(readCardFields());
   }),
