@@ -58,11 +58,11 @@
             <div class="panel ai-panel">
               <div class="panel-head"><div><span class="step-num ai-step">✦</span><div><h2>AI Sana · анализ</h2><p>Локальная объяснимая заглушка AI</p></div></div><span class="ai-badge">AI</span></div>
               <div id="ai-empty" class="empty-state"><div class="empty-icon">✦</div><p>Здесь появятся уточняющие вопросы,<br/>причины рейтинга и подсказки.</p></div>
-              <div id="ai-result" class="hidden"></div>
+              <div id="ai-result" class="hidden"></div><label class="confirm-check"><input type="checkbox" id="simulate-ai-error" /> Демо: некорректный ответ AI</label>
               <details class="prompt-details"><summary>Показать prompt и формат обмена</summary><pre id="prompt-preview">SYSTEM: Анализируй только факты пользователя. Не выдумывай значения.
 INPUT: { companyName, draft, industry, contact, answers[] }
 OUTPUT: { missingFields[], questions[], suggestions[] }
-ERROR: при некорректном ответе вернуть fallback с 3 вопросами.</pre></details>
+ERROR: при некорректном ответе вернуть локальные вопросы по незаполненным полям.</pre></details>
             </div>
           </div>
 
@@ -71,9 +71,9 @@ ERROR: при некорректном ответе вернуть fallback с 3
             <div id="missing-banner" class="missing-banner hidden"></div>
             <div class="score-track"><span id="score-track-fill"></span></div>
             <div class="readiness-row"><span id="readiness-label" class="readiness draft">Черновик</span><span id="score-explain">Заполните карточку, чтобы увидеть расчёт.</span></div>
-            <div class="card-grid">
+            <div id="score-breakdown" aria-live="polite"></div><div class="card-grid">
               <label class="card-field wide"><span>Компания заказчика</span><input data-field="companyName" placeholder="Название компании" /></label>
-              <label class="card-field wide"><span>Название задачи <i>*</i></span><input data-field="title" placeholder="Короткое название" /></label>
+              <label class="card-field wide"><span>Контакт <i>*</i></span><input data-field="contact" placeholder="Имя / email" /></label><label class="card-field wide"><span>Название задачи <i>*</i></span><input data-field="title" placeholder="Короткое название" /></label>
               <label class="card-field"><span>Контекст и потребность <i>*</i><em>20</em></span><textarea data-field="contextNeed" rows="4" placeholder="Что происходит сейчас и что нужно изменить?"></textarea></label>
               <label class="card-field"><span>Пользователи <i>*</i><em>10</em></span><textarea data-field="users" rows="4" placeholder="Для кого создаётся решение?"></textarea></label>
               <label class="card-field"><span>Данные и материалы <i>*</i><em>20</em></span><textarea data-field="data" rows="4" placeholder="Какие данные, примеры или источники доступны?"></textarea></label>
