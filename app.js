@@ -48,7 +48,10 @@ function loadState(){
   clone(seed.proposals).forEach(proposal => { const task = tasks.find(t => t.id === proposal.taskId); if(task) task.offers.push(proposal); });
   return { ...clone(seed), tasks, proposals: clone(seed.proposals), dependentTasks:[] };
 }
-function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateCounts(); }
+function persist(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateCounts(); return true; }
+  catch(e){ toast('Не удалось сохранить данные в браузере. Изменения доступны только до закрытия страницы.',false); return false; }
+}
 function esc(value=''){ return String(value).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function toast(message, success=true){const el=document.getElementById('toast'); el.textContent=message; el.className='toast '+(success?'success':''); setTimeout(()=>el.classList.add('hidden'),2600);}
 function getTask(){ return state.tasks.find(t=>t.id===activeTaskId); }
@@ -56,16 +59,25 @@ function readiness(score){ if(score>=90) return ['priority','Приоритет�
 function calculateScore(task){
   const values={contextNeed:task.contextNeed,data:task.data,expectedResult:task.expectedResult,successCriteria:task.successCriteria,constraints:task.constraints,users:task.users,businessLink:(task.contact&&task.format)?'yes':''};
   const breakdown={}; let score=0;
-  Object.keys(WEIGHTS).forEach(key=>{ const ok=String(values[key]||'').trim().length>=8; breakdown[key]=ok?WEIGHTS[key]:0; score+=breakdown[key]; });
+  Object.keys(WEIGHTS).forEach(key=>{ const ok=key==='businessLink' ? [task.contact,task.format].every(value=>typeof value==='string'&&value.trim().length>=8) : String(values[key]||'').trim().length>=8; breakdown[key]=ok?WEIGHTS[key]:0; score+=breakdown[key]; });
   return {score,breakdown,missing:Object.keys(WEIGHTS).filter(k=>!breakdown[k])};
 }
 function setCardFields(task){ document.querySelectorAll('[data-field]').forEach(el=>el.value=task[el.dataset.field]||''); document.getElementById('draft-company').value=task.companyName||document.getElementById('draft-company').value; document.getElementById('draft-contact').value=task.contact||document.getElementById('draft-contact').value; document.getElementById('draft-industry').value=task.industry||'Другое'; renderScore(task); }
 function readCardFields(){
   const task=getTask()||{id:'draft-'+Date.now(),offers:[]}; document.querySelectorAll('[data-field]').forEach(el=>task[el.dataset.field]=el.value);
-  task.companyName=document.getElementById('draft-company').value.trim(); task.contact=document.getElementById('draft-contact').value; task.industry=document.getElementById('draft-industry').value; const calc=calculateScore(task); Object.assign(task,calc); return task;
+  task.industry=document.getElementById('draft-industry').value; const calc=calculateScore(task); Object.assign(task,calc); return task;
 }
+function storeCard(task){
+  const index=state.tasks.findIndex(item=>item.id===task.id);
+  if(index<0) state.tasks.unshift(task); else state.tasks[index]=task;
+  activeTaskId=task.id; state.activeTaskId=task.id;
+  return persist();
+}
+function saveDraft(){ const task=readCardFields(); if(storeCard(task)) toast('Карточка сохранена'); }
+function scoreDetails(task){const calc=calculateScore(task);return '<ul class="score-breakdown">'+Object.keys(WEIGHTS).map(key=>`<li>${FIELD_LABELS[key]}: <strong>${calc.breakdown[key]} / ${WEIGHTS[key]}</strong></li>`).join('')+'</ul>';}
 function renderScore(task){
   const calc=calculateScore(task); Object.assign(task,calc); document.getElementById('score-value').textContent=calc.score; document.getElementById('score-track-fill').style.width=calc.score+'%';
+  document.getElementById('score-breakdown').innerHTML=scoreDetails(task);
   const [level,label]=readiness(calc.score); const badge=document.getElementById('readiness-label'); badge.className='readiness '+level; badge.textContent=label;
   const explanation=calc.score===100?'Карточка полностью готова к работе.':`${calc.score}/100 · ${calc.missing.length} ${calc.missing.length===1?'поле требует':'полей требуют'} дополнения.`; document.getElementById('score-explain').textContent=explanation;
   const banner=document.getElementById('missing-banner'); if(calc.missing.length){banner.classList.remove('hidden');banner.innerHTML='<strong>Как повысить рейтинг:</strong> '+calc.missing.map(k=>FIELD_LABELS[k]).join(', ')+'. Баллы начисляются после заполнения и подтверждения.';}else banner.classList.add('hidden');
